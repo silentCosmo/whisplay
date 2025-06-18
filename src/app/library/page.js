@@ -37,7 +37,7 @@ export default function Library() {
 
           const cover = meta.cover
             ? `/api/cover/${meta.id}` // 🔁 use proxy route
-            : null;
+            : '/default.png';
 
           setSongs((prev) => {
             const updated = [...prev];
@@ -45,6 +45,7 @@ export default function Library() {
               id: file.id,
               title: meta.title || file.name.replace(/\.[^/.]+$/, ""),
               artist: meta.artist || "Unknown",
+              url: `/api/song?id=${file.id}`,
               cover, // could be null
             };
             return updated;
