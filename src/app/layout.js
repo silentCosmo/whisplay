@@ -13,16 +13,16 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Whisplay",
-  description: "Bone",
+  description: "Born of silence and tuned in love. 🎶💿✨",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[red]`}
       >
-        {children}
+        <main className="max-w-4xl mx-auto p-6">{children}</main>
       </body>
     </html>
   );
