@@ -2,8 +2,10 @@
 
 import { google } from "googleapis";
 import { parseBuffer } from "music-metadata";
-//import { connectToDB } from "@/lib/db";
+import { connectToDB } from "@/lib/db";
 import fetch from "node-fetch";
+import { Readable } from "stream";
+
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,10 @@ export async function GET() {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
         private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
       },
-      scopes: ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/drive.file"],
+      scopes: [
+        "https://www.googleapis.com/auth/drive.readonly",
+        "https://www.googleapis.com/auth/drive.file",
+      ],
     });
 
     const drive = google.drive({ version: "v3", auth });
@@ -49,8 +54,8 @@ export async function GET() {
       const buffer = Buffer.from(stream);
 
       let title = fileName.replace(/\.[^/.]+$/, "");
-      let artist = "Unknown";
-      let cover = "/default.jpg";
+      let artist = null;
+      let cover = null;
       let duration = 0;
 
       // 4. Parse metadata
@@ -63,25 +68,18 @@ export async function GET() {
 
         const pic = meta.common.picture?.[0];
         if (pic) {
-          // 5. Upload cover to Drive
+          const imageBuffer = Buffer.from(pic.data); // Convert Uint8Array to Buffer
+          const imageStream = Readable.from(imageBuffer); // Convert to readable stream
+
           const { data: uploaded } = await drive.files.create({
             requestBody: {
               name: `${fileId}_cover.jpg`,
               mimeType: pic.format || "image/jpeg",
+              parents: [process.env.GOOGLE_DRIVE_COVER_FOLDER], // Optional: target folder
             },
             media: {
               mimeType: pic.format || "image/jpeg",
-              body: Buffer.from(pic.data),
-            },
-            fields: "id",
-          });
-
-          // 6. Make it public
-          await drive.permissions.create({
-            fileId: uploaded.id,
-            requestBody: {
-              role: "reader",
-              type: "anyone",
+              body: imageStream,
             },
           });
 

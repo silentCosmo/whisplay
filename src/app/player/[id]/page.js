@@ -1,58 +1,95 @@
-// app/player/[id]/page.js
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { parseBlob } from "music-metadata-browser";
+import useSongStore from "@/lib/songStore";
 
 export default function PlayerPage() {
   const { id } = useParams();
-  const [meta, setMeta] = useState(null);
+  const { currentSong } = useSongStore();
+
+  const [meta, setMeta] = useState({
+    title: "Loading title...",
+    artist: "Loading artist...",
+    album: "Loading album...",
+    cover: "/loading.jpg",
+  });
   const [audioUrl, setAudioUrl] = useState(null);
+  const [coverReady, setCoverReady] = useState(false);
 
   useEffect(() => {
-    const fetchMeta = async () => {
-      const url = `/api/song?id=${id}`;
-      setAudioUrl(url); // Set audio src
+    setAudioUrl(`/api/song?id=${id}`);
 
-      const blob = await fetch(url).then((res) => res.blob());
-      const metadata = await parseBlob(blob);
+    const loadMeta = async () => {
+      let data = currentSong;
 
-      const pic = metadata.common.picture?.[0];
-      const cover = pic
-        ? URL.createObjectURL(new Blob([pic.data]))
-        : "/default.jpg";
+      if (!data || data.id !== id) {
+        // fallback if user reloads directly on /player/:id
+        try {
+          const res = await fetch(`/api/meta/${id}`);
+          data = await res.json();
+        } catch (err) {
+          console.error("Meta fetch failed:", err);
+        }
+      }
 
-      setMeta({
-        title: metadata.common.title || "Unknown Title",
-        artist: metadata.common.artist || "Unknown Artist",
-        album: metadata.common.album || "Unknown Album",
-        cover,
-      });
+      const coverUrl = data?.cover
+        ? `/api/cover/${id}`
+        : "/default.png";
+
+      const img = new Image();
+      img.src = coverUrl;
+
+      img.onload = () => {
+        setMeta({
+          title: data?.title || "Unknown Title",
+          artist: data?.artist || "Unknown Artist",
+          album: data?.album || "Unknown Album",
+          cover: coverUrl,
+        });
+        setCoverReady(true);
+      };
+
+      img.onerror = () => {
+        setMeta((prev) => ({
+          ...prev,
+          cover: "/default.png",
+        }));
+        setCoverReady(true);
+      };
     };
 
-    fetchMeta();
-  }, [id]);
-
-  if (!meta) {
-    return (
-      <div className="p-6 text-center text-pinky text-xl">Loading Whisplay magic...</div>
-    );
-  }
+    loadMeta();
+  }, [id, currentSong]);
 
   return (
-    <div className="p-6 flex flex-col items-center">
-      <img
-        src={meta.cover}
-        className="w-64 h-64 object-cover rounded-2xl shadow mb-4"
-        alt="Cover"
-      />
-      <h1 className="text-2xl font-bold">{meta.title}</h1>
+    <div className="p-6 flex flex-col items-center transition-all duration-300">
+      <div className="relative w-64 h-64 mb-4">
+        <img
+          src={meta.cover}
+          className={`w-full h-full object-cover rounded-2xl shadow transition-opacity duration-500 ${
+            coverReady ? "opacity-100" : "opacity-50 blur"
+          }`}
+          alt="Cover"
+        />
+      </div>
+
+      <h1 className={`text-2xl font-bold ${!coverReady ? "animate-pulse" : ""}`}>
+        {meta.title}
+      </h1>
       <p className="text-pink-300 text-md">{meta.artist}</p>
       <p className="text-pink-400 text-sm italic mb-4">{meta.album}</p>
 
-      <audio controls autoPlay src={audioUrl} className="w-full max-w-xl mt-4" />
+      {audioUrl ? (
+        <audio
+          controls
+          autoPlay
+          src={audioUrl}
+          className="w-full max-w-xl mt-4"
+        />
+      ) : (
+        <p className="text-pinky text-sm mt-4">Loading audio...</p>
+      )}
     </div>
   );
 }

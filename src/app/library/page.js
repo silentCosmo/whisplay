@@ -2,45 +2,58 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import useSongStore from "@/lib/songStore";
+
 
 export default function Library() {
   const [songs, setSongs] = useState([]);
   const router = useRouter();
+  const {setCurrentSong} = useSongStore()
 
   useEffect(() => {
     const fetchFiles = async () => {
       const res = await fetch("/api/drive/list");
       const files = await res.json();
 
-      // Just show placeholder cards first
-      setSongs(files.map(file => ({
-        id: file.id,
-        title: file.name.replace(/\.[^/.]+$/, ""),
-        artist: "Loading...",
-        cover: "/loading.jpg",
-      })));
+      // Show placeholders first for fast UI
+      setSongs(
+        files.map((file) => ({
+          id: file.id,
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          artist: "Loading...",
+          cover: "/loading.jpg",
+        }))
+      );
 
-      // Now update each song gently
+      // Load each meta individually
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         try {
           const metaRes = await fetch(`/api/meta/${file.id}`);
           const meta = await metaRes.json();
 
-          setSongs(prev => {
+          console.log(meta);
+
+          const cover = meta.cover
+            ? `/api/cover/${meta.id}` // 🔁 use proxy route
+            : null;
+
+          setSongs((prev) => {
             const updated = [...prev];
             updated[i] = {
               id: file.id,
               title: meta.title || file.name.replace(/\.[^/.]+$/, ""),
               artist: meta.artist || "Unknown",
-              cover: meta.cover || "/default.jpg",
+              cover, // could be null
             };
             return updated;
           });
         } catch (err) {
-          console.warn("⚠️ Failed to load meta for", file.name);
+          console.warn("⚠️ Failed to load meta for", file.name, err);
         }
-        await new Promise(r => setTimeout(r, 50)); // small delay between fetches
+
+        await new Promise((r) => setTimeout(r, 50)); // gentle async load
       }
     };
 
@@ -52,11 +65,17 @@ export default function Library() {
       {songs.map((song) => (
         <div
           key={song.id}
-          onClick={() => router.push(`/player/${song.id}`)}
+          //onClick={() => router.push(`/player/${song.id}`)}
+          onClick={() => {
+            setCurrentSong(song);
+            router.push(`/player/${song.id}`);
+          }}
           className="cursor-pointer bg-white/10 p-4 rounded-lg shadow hover:scale-105 transition"
         >
-          <img
-            src={song.cover}
+          <Image
+            height={400}
+            width={400}
+            src={song.cover || "/default.png"} // 🧠 fallback if null
             className="rounded mb-2 w-full h-40 object-cover"
             alt={song.title}
           />
