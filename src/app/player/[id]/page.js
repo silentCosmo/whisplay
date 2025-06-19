@@ -12,149 +12,144 @@ import {
 } from "react-icons/fa";
 import Image from "next/image";
 
-export default function PlayerPage() {
+export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
   const router = useRouter();
-
-  const {
-    songs,
-    currentSong,
-    setCurrentSong,
-    playNext,
-    playPrevious,
-  } = useSongStore();
+  const { currentSong, setCurrentSong, playNext, playPrevious } =
+    useSongStore();
 
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
+
   const [theme, setTheme] = useState({
     vibrant: "#e91e63",
     muted: "#222",
     darkMuted: "#111",
     lightMuted: "#ccc",
+    darkVibrant: "green",
   });
 
   const [meta, setMeta] = useState({
-    title: "Loading title...",
-    artist: "Loading artist...",
-    album: "Loading album...",
+    title: "Loading…",
+    artist: "Loading…",
+    album: "",
     cover: "/loading.jpg",
     url: "",
   });
 
-  // Rehydrate on refresh
   useEffect(() => {
-    const rehydrate = async () => {
-      if (!currentSong && id) {
-        const res = await fetch(`/api/meta/${id}`);
-        const data = await res.json();
-
-        const fallbackSong = {
-          id,
-          title: data.title || "Unknown Title",
-          artist: data.artist || "Unknown Artist",
-          album: data.album || "Unknown Album",
-          cover: data.cover ? `/api/cover/${id}` : "/default.png",
-          url: `/api/song?id=${id}`,
-          theme: data.theme,
-        };
-
-        setCurrentSong(fallbackSong);
-      }
-    };
-    rehydrate();
+    if (!currentSong && id) {
+      fetch(`/api/meta/${id}`)
+        .then((r) => r.json())
+        .then((data) =>
+          setCurrentSong({
+            id,
+            title: data.title,
+            artist: data.artist,
+            album: data.album,
+            cover: data.cover ? `/api/cover/${id}` : "/default.png",
+            url: `/api/song?id=${id}`,
+            theme: data.theme,
+          })
+        );
+    }
   }, [id, currentSong]);
 
-  // Load theme and meta
   useEffect(() => {
     if (!currentSong) return;
 
     setMeta(currentSong);
+
     if (currentSong.theme) {
+      const t = currentSong.theme;
       setTheme({
-        vibrant: currentSong.theme.vibrant || "#e91e63",
-        muted: currentSong.theme.muted || "#222",
-        darkMuted: currentSong.theme.darkMuted || "#111",
-        lightMuted: currentSong.theme.lightMuted || "#ccc",
+        vibrant: t.vibrant || "#e91e63",
+        muted: t.muted || "#222",
+        darkMuted: t.darkMuted || "#111",
+        lightMuted: t.lightMuted || "#ccc",
       });
     }
 
     setPlaying(true);
 
-    // Sync URL
-    if (currentSong.id && currentSong.id !== id) {
+    if (currentSong.id !== id) {
       router.replace(`/player/${currentSong.id}`);
     }
   }, [currentSong, id, router]);
 
-  // Player control functions
   const togglePlay = () => {
     if (!audioRef.current) return;
     playing ? audioRef.current.pause() : audioRef.current.play();
     setPlaying(!playing);
   };
 
-  const handleTimeUpdate = () => {
-    setCurrentTime(audioRef.current.currentTime);
-  };
-
-  const handleLoadedMetadata = () => {
-    setDuration(audioRef.current.duration);
-  };
-
+  const handleTimeUpdate = () => setCurrentTime(audioRef.current.currentTime);
+  const handleLoadedMetadata = () => setDuration(audioRef.current.duration);
   const handleSeek = (e) => {
-    const time = parseFloat(e.target.value);
-    audioRef.current.currentTime = time;
-    setCurrentTime(time);
+    audioRef.current.currentTime = e.target.value;
+    setCurrentTime(e.target.value);
   };
-
   const handleVolumeChange = (e) => {
-    const vol = parseFloat(e.target.value);
-    setVolume(vol);
+    const vol = e.target.value;
     audioRef.current.volume = vol;
+    setVolume(vol);
   };
 
   const formatTime = (t) =>
-    isNaN(t) ? "0:00" : `${Math.floor(t / 60)}:${("0" + Math.floor(t % 60)).slice(-2)}`;
+    isNaN(t)
+      ? "0:00"
+      : `${Math.floor(t / 60)}:${("0" + Math.floor(t % 60)).slice(-2)}`;
 
-  // 🌈 Background Styles
   const backgroundGradient = `linear-gradient(to bottom, ${theme.darkMuted} 0%, ${theme.muted} 100%)`;
 
   return (
     <div
-      className="min-h-screen w-full relative overflow-hidden flex items-center justify-center"
+      className="min-h-screen relative flex items-center justify-center md:rounded-3xl"
       style={{ background: backgroundGradient }}
     >
-      {/* Soft blur cover image in background */}
       <div
-        className="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 scale-110"
+        className="absolute inset-0 bg-cover bg-center blur-2xl opacity-20"
         style={{ backgroundImage: `url(${meta.cover})` }}
       />
+      <div className="absolute inset-0 bg-black/50" />
 
-      {/* Black overlay for clarity */}
-      <div className="absolute inset-0 bg-black/60 z-0" />
+      <div className="z-10 relative max-w-lg w-full bg-transparent p-6 flex flex-col items-center">
+        <span
+          className="uppercase text-xs font-semibold"
+          style={{ color: theme.lightMuted }}
+        >
+          Now Playing
+        </span>
 
-      {/* Content container */}
-      <div className="z-10 relative w-full max-w-xl mx-auto text-white p-6 flex flex-col items-center">
-        {/* Cover */}
-        <div className="w-64 h-64 rounded-2xl overflow-hidden shadow-xl mb-4">
+        <div className="w-64 h-64 rounded-3xl overflow-hidden shadow-xl mb-4">
           <Image
             src={meta.cover}
-            alt={meta.title}
-            height={400}
             width={400}
-            className="w-full h-full object-cover"
+            height={400}
+            alt={meta.title}
+            className="object-cover w-full h-full"
           />
         </div>
 
-        {/* Title & Info */}
-        <h1 className="text-2xl font-bold text-center">{meta.title}</h1>
-        <p className="text-pink-300">{meta.artist}</p>
-        <p className="text-pink-400 italic">{meta.album}</p>
+        <h1
+          className="text-2xl font-bold text-center"
+          style={{ color: theme.lightMuted }}
+        >
+          {meta.title}
+        </h1>
+        <p className="text-sm mt-1" style={{ color: theme.lightMuted }}>
+          {meta.artist}
+        </p>
+        {meta.album && (
+          <p className="italic text-xs" style={{ color: theme.lightMuted }}>
+            {meta.album}
+          </p>
+        )}
 
-        {/* Audio Element */}
+        {/* Audio */}
         {meta.url && (
           <audio
             ref={audioRef}
@@ -173,50 +168,85 @@ export default function PlayerPage() {
         <div className="mt-6 w-full">
           <input
             type="range"
-            min={0}
+            min="0"
             max={duration}
             value={currentTime}
             onChange={handleSeek}
             className="w-full"
-            style={{ accentColor: theme.vibrant }}
+            style={{
+              accentColor: theme.vibrant,
+              backgroundColor: theme.lightMuted,
+              height: "6px",
+              borderRadius: "3px",
+            }}
           />
-          <div className="flex justify-between text-sm text-pink-300 mt-1">
+          <div
+            className="flex justify-between text-xs mt-1"
+            style={{ color: theme.lightMuted }}
+          >
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="flex justify-center items-center gap-6 mt-6 text-2xl text-pink-300">
-          <button onClick={playPrevious}>
+        <div className="flex justify-center items-center gap-8 mt-8">
+          <button
+            onClick={playPrevious}
+            className="text-2xl hover:scale-110 transition"
+            style={{ color: theme.muted }}
+          >
             <FaStepBackward />
           </button>
+
           <button
             onClick={togglePlay}
-            className="text-white p-4 rounded-full shadow-lg transition"
-            style={{ backgroundColor: theme.vibrant }}
+            className="p-4 rounded-full shadow-lg hover:scale-105 transition"
+            style={{
+              backgroundColor: theme.vibrant,
+              color: theme.darkVibrant,
+              boxShadow: `0 0 20px ${theme.vibrant}80`,
+            }}
           >
-            {playing ? <FaPause /> : <FaPlay />}
+            {playing ? <FaPause size={20} /> : <FaPlay size={20} />}
           </button>
-          <button onClick={playNext}>
+
+          <button
+            onClick={playNext}
+            className="text-2xl hover:scale-110 transition"
+            style={{ color: theme.muted }}
+          >
             <FaStepForward />
           </button>
         </div>
 
         {/* Volume */}
-        <div className="flex items-center gap-2 mt-6 w-full">
-          <FaVolumeUp className="text-pink-300" />
+        <div className="flex items-center gap-3 mt-6 w-full px-4">
+          <FaVolumeUp className="text-lg" style={{ color: theme.lightMuted }} />
           <input
             type="range"
-            min={0}
-            max={1}
-            step={0.01}
+            min="0"
+            max="1"
+            step="0.01"
             value={volume}
             onChange={handleVolumeChange}
-            className="w-full"
-            style={{ accentColor: theme.vibrant }}
+            className="w-10/12"
+            style={{
+              accentColor: theme.vibrant,
+              height: "4px",
+              borderRadius: "2px",
+            }}
           />
         </div>
+
+        {onTogglePlaylist && (
+          <button
+            className="fixed bottom-2 left-1/2 transform -translate-x-1/2 z-50 sm:hidden bg-black/40 px-4 py-2 rounded-full text-sm text-white shadow-lg"
+            onClick={onTogglePlaylist}
+          >
+            Open Playlist
+          </button>
+        )}
       </div>
     </div>
   );
