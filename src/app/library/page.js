@@ -5,60 +5,32 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import useSongStore from "@/lib/songStore";
 
-
 export default function Library() {
   const [songs, setSongs] = useState([]);
   const router = useRouter();
-  const {setCurrentSong} = useSongStore()
+  const { setCurrentSong, setSongs: setGlobalSongs } = useSongStore();
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      const res = await fetch("/api/drive/list");
-      const files = await res.json();
+    const fetchSongs = async () => {
+      try {
+        const res = await fetch("/api/songs"); // From MongoDB
+        const rawSongs = await res.json();
 
-      // Show placeholders first for fast UI
-      setSongs(
-        files.map((file) => ({
-          id: file.id,
-          title: file.name.replace(/\.[^/.]+$/, ""),
-          artist: "Loading...",
-          cover: "/loading.jpg",
-        }))
-      );
+        // Build songs with dynamic url
+        const formattedSongs = rawSongs.map((song) => ({
+          ...song,
+          url: `/api/song?id=${song.id}`, // Don't store this in DB
+          cover: song.cover || "/default.png", // fallback
+        }));
 
-      // Load each meta individually
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        try {
-          const metaRes = await fetch(`/api/meta/${file.id}`);
-          const meta = await metaRes.json();
-
-          console.log(meta);
-
-          const cover = meta.cover
-            ? `/api/cover/${meta.id}` // 🔁 use proxy route
-            : '/default.png';
-
-          setSongs((prev) => {
-            const updated = [...prev];
-            updated[i] = {
-              id: file.id,
-              title: meta.title || file.name.replace(/\.[^/.]+$/, ""),
-              artist: meta.artist || "Unknown",
-              url: `/api/song?id=${file.id}`,
-              cover, // could be null
-            };
-            return updated;
-          });
-        } catch (err) {
-          console.warn("⚠️ Failed to load meta for", file.name, err);
-        }
-
-        await new Promise((r) => setTimeout(r, 50)); // gentle async load
+        setSongs(formattedSongs);          // For this UI
+        setGlobalSongs(formattedSongs);    // For global store
+      } catch (err) {
+        console.error("💥 Failed to fetch songs:", err);
       }
     };
 
-    fetchFiles();
+    fetchSongs();
   }, []);
 
   return (
@@ -66,7 +38,6 @@ export default function Library() {
       {songs.map((song) => (
         <div
           key={song.id}
-          //onClick={() => router.push(`/player/${song.id}`)}
           onClick={() => {
             setCurrentSong(song);
             router.push(`/player/${song.id}`);
@@ -76,7 +47,7 @@ export default function Library() {
           <Image
             height={400}
             width={400}
-            src={song.cover || "/default.png"} // 🧠 fallback if null
+            src={song.cover || "/default.png"}
             className="rounded mb-2 w-full h-40 object-cover"
             alt={song.title}
           />

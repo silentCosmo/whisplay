@@ -1,26 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import useSongStore from "@/lib/songStore";
 import {
   FaPlay,
   FaPause,
   FaVolumeUp,
-  FaRedo,
   FaStepBackward,
   FaStepForward,
 } from "react-icons/fa";
-import { IoMdShuffle } from "react-icons/io";
-import ColorThief from "color-thief-browser";
 import Image from "next/image";
 
 export default function PlayerPage() {
   const { id } = useParams();
+  const router = useRouter();
+
   const {
     songs,
     currentSong,
-    currentIndex,
     setCurrentSong,
     playNext,
     playPrevious,
@@ -31,66 +29,70 @@ export default function PlayerPage() {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
-  const [bgColor, setBgColor] = useState("#1a1a1a");
+  const [theme, setTheme] = useState({
+    vibrant: "#e91e63",
+    muted: "#222",
+    darkMuted: "#111",
+    lightMuted: "#ccc",
+  });
+
   const [meta, setMeta] = useState({
     title: "Loading title...",
     artist: "Loading artist...",
     album: "Loading album...",
     cover: "/loading.jpg",
+    url: "",
   });
 
-  // Load meta and theme
+  // Rehydrate on refresh
   useEffect(() => {
-    const fetchMeta = async () => {
-      if (currentSong && currentSong.id === id) {
-        setMeta(currentSong);
-        extractThemeColor(currentSong.cover);
-      } else {
+    const rehydrate = async () => {
+      if (!currentSong && id) {
         const res = await fetch(`/api/meta/${id}`);
         const data = await res.json();
-        
-        const cover = data.cover ? `/api/cover/${id}` : "/default.png";
-        
-        console.log('cover:' , data.cover);
-        
-        const metaObj = {
+
+        const fallbackSong = {
+          id,
           title: data.title || "Unknown Title",
           artist: data.artist || "Unknown Artist",
           album: data.album || "Unknown Album",
-          cover,
+          cover: data.cover ? `/api/cover/${id}` : "/default.png",
+          url: `/api/song?id=${id}`,
+          theme: data.theme,
         };
-        setMeta(metaObj);
-        extractThemeColor(cover);
-        setCurrentSong(metaObj);
+
+        setCurrentSong(fallbackSong);
       }
     };
+    rehydrate();
+  }, [id, currentSong]);
 
-    fetchMeta();
-  }, [id]);
+  // Load theme and meta
+  useEffect(() => {
+    if (!currentSong) return;
 
-  const extractThemeColor = async (coverUrl) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = coverUrl;
-      img.onload = () => {
-        const color = new ColorThief().getColor(img);
-        setBgColor(`rgb(${color.join(",")})`);
-      };
-    } catch (err) {
-      console.warn("🎨 Failed to extract color", err);
+    setMeta(currentSong);
+    if (currentSong.theme) {
+      setTheme({
+        vibrant: currentSong.theme.vibrant || "#e91e63",
+        muted: currentSong.theme.muted || "#222",
+        darkMuted: currentSong.theme.darkMuted || "#111",
+        lightMuted: currentSong.theme.lightMuted || "#ccc",
+      });
     }
-  };
 
+    setPlaying(true);
+
+    // Sync URL
+    if (currentSong.id && currentSong.id !== id) {
+      router.replace(`/player/${currentSong.id}`);
+    }
+  }, [currentSong, id, router]);
+
+  // Player control functions
   const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (playing) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
+    if (!audioRef.current) return;
+    playing ? audioRef.current.pause() : audioRef.current.play();
     setPlaying(!playing);
   };
 
@@ -114,67 +116,85 @@ export default function PlayerPage() {
     audioRef.current.volume = vol;
   };
 
-  const formatTime = (time) =>
-    isNaN(time)
-      ? "0:00"
-      : `${Math.floor(time / 60)}:${("0" + Math.floor(time % 60)).slice(-2)}`;
+  const formatTime = (t) =>
+    isNaN(t) ? "0:00" : `${Math.floor(t / 60)}:${("0" + Math.floor(t % 60)).slice(-2)}`;
+
+  // 🌈 Background Styles
+  const backgroundGradient = `linear-gradient(to bottom, ${theme.darkMuted} 0%, ${theme.muted} 100%)`;
 
   return (
     <div
-      className="min-h-screen w-full p-6 flex flex-col items-center text-white transition-all duration-700"
-      style={{
-        background: `linear-gradient(160deg, ${bgColor} 20%, #000)`,
-      }}
+      className="min-h-screen w-full relative overflow-hidden flex items-center justify-center"
+      style={{ background: backgroundGradient }}
     >
-      <div className="w-64 h-64 rounded-2xl overflow-hidden shadow-lg mb-4">
-        <Image
-          height={400}
-          width={400}
-          src={meta.cover}
-          alt={meta.title}
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      <h1 className="text-2xl font-bold text-center">{meta.title}</h1>
-      <p className="text-pink-300">{meta.artist}</p>
-      <p className="text-pink-400 italic">{meta.album}</p>
-
-      <audio
-        ref={audioRef}
-        src={meta.url}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => {
-          setPlaying(false);
-          playNext();
-        }}
-        autoPlay
+      {/* Soft blur cover image in background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 scale-110"
+        style={{ backgroundImage: `url(${meta.cover})` }}
       />
 
-      {/* Seekbar */}
-      <div className="mt-6 w-full max-w-xl">
-        <input
-          type="range"
-          min={0}
-          max={duration}
-          value={currentTime}
-          onChange={handleSeek}
-          className="w-full accent-pink-400"
-        />
-        <div className="flex justify-between text-sm text-pink-300 mt-1">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+      {/* Black overlay for clarity */}
+      <div className="absolute inset-0 bg-black/60 z-0" />
+
+      {/* Content container */}
+      <div className="z-10 relative w-full max-w-xl mx-auto text-white p-6 flex flex-col items-center">
+        {/* Cover */}
+        <div className="w-64 h-64 rounded-2xl overflow-hidden shadow-xl mb-4">
+          <Image
+            src={meta.cover}
+            alt={meta.title}
+            height={400}
+            width={400}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Title & Info */}
+        <h1 className="text-2xl font-bold text-center">{meta.title}</h1>
+        <p className="text-pink-300">{meta.artist}</p>
+        <p className="text-pink-400 italic">{meta.album}</p>
+
+        {/* Audio Element */}
+        {meta.url && (
+          <audio
+            ref={audioRef}
+            src={meta.url}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onEnded={() => {
+              setPlaying(false);
+              playNext();
+            }}
+            autoPlay
+          />
+        )}
+
+        {/* Seekbar */}
+        <div className="mt-6 w-full">
+          <input
+            type="range"
+            min={0}
+            max={duration}
+            value={currentTime}
+            onChange={handleSeek}
+            className="w-full"
+            style={{ accentColor: theme.vibrant }}
+          />
+          <div className="flex justify-between text-sm text-pink-300 mt-1">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
         </div>
 
         {/* Controls */}
-        <div className="flex justify-center items-center gap-6 mt-4 text-2xl text-pink-300">
+        <div className="flex justify-center items-center gap-6 mt-6 text-2xl text-pink-300">
           <button onClick={playPrevious}>
             <FaStepBackward />
           </button>
           <button
             onClick={togglePlay}
-            className="text-white bg-pink-600 p-3 rounded-full shadow-lg hover:bg-pink-500 transition"
+            className="text-white p-4 rounded-full shadow-lg transition"
+            style={{ backgroundColor: theme.vibrant }}
           >
             {playing ? <FaPause /> : <FaPlay />}
           </button>
@@ -184,7 +204,7 @@ export default function PlayerPage() {
         </div>
 
         {/* Volume */}
-        <div className="flex items-center gap-2 mt-4">
+        <div className="flex items-center gap-2 mt-6 w-full">
           <FaVolumeUp className="text-pink-300" />
           <input
             type="range"
@@ -193,7 +213,8 @@ export default function PlayerPage() {
             step={0.01}
             value={volume}
             onChange={handleVolumeChange}
-            className="w-full accent-pink-400"
+            className="w-full"
+            style={{ accentColor: theme.vibrant }}
           />
         </div>
       </div>

@@ -1,34 +1,40 @@
-// lib/songStore.js
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-const useSongStore = create((set) => ({
-  playlist: [],
-  currentIndex: 0,
-  currentSong: null,
+const useSongStore = create(
+  persist(
+    (set, get) => ({
+      songs: [],
+      currentSong: null,
+      currentIndex: -1,
 
-  setPlaylist: (list) => set({ playlist: list }),
-  setCurrentSong: (song, index) =>
-    set({ currentSong: song, currentIndex: index }),
+      setSongs: (songs) => set({ songs }),
 
-  nextSong: () =>
-    set((state) => {
-      const nextIndex = (state.currentIndex + 1) % state.playlist.length;
-      return {
-        currentIndex: nextIndex,
-        currentSong: state.playlist[nextIndex],
-      };
+      setCurrentSong: (song) => {
+        const index = get().songs.findIndex((s) => s.id === song.id);
+        set({ currentSong: song, currentIndex: index });
+      },
+
+      playNext: () => {
+        const { songs, currentIndex, setCurrentSong } = get();
+        const nextIndex = currentIndex + 1;
+        if (songs[nextIndex]) {
+          setCurrentSong(songs[nextIndex]);
+        }
+      },
+
+      playPrevious: () => {
+        const { songs, currentIndex, setCurrentSong } = get();
+        const prevIndex = currentIndex - 1;
+        if (songs[prevIndex]) {
+          setCurrentSong(songs[prevIndex]);
+        }
+      },
     }),
-
-  prevSong: () =>
-    set((state) => {
-      const prevIndex =
-        (state.currentIndex - 1 + state.playlist.length) %
-        state.playlist.length;
-      return {
-        currentIndex: prevIndex,
-        currentSong: state.playlist[prevIndex],
-      };
-    }),
-}));
+    {
+      name: "song-store", // localStorage key
+    }
+  )
+);
 
 export default useSongStore;
