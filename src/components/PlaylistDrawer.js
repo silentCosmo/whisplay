@@ -29,7 +29,7 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
       className={`${
         isMobile
           ? "bg-black/90 backdrop-blur-sm max-h-[75vh] rounded-t-2xl overflow-hidden"
-          : "h-full"
+          : "h-[100vh] overflow-y-auto ml-5 rounded-3xl"
       } p-4`}
       style={{
         background: isMobile ? theme.darkMuted : theme.muted,

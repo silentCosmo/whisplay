@@ -15,7 +15,7 @@ import Image from "next/image";
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
   const router = useRouter();
-  const { currentSong, setCurrentSong, playNext, playPrevious } =
+  const { currentSong, setCurrentSong, playNext, playPrevious, repeat } =
     useSongStore();
 
   const audioRef = useRef(null);
@@ -23,6 +23,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   const [theme, setTheme] = useState({
     vibrant: "#e91e63",
@@ -80,14 +81,32 @@ export default function PlayerPage({ onTogglePlaylist }) {
     }
   }, [currentSong, id, router]);
 
-  const togglePlay = () => {
+  /* const togglePlay = () => {
     if (!audioRef.current) return;
     playing ? audioRef.current.pause() : audioRef.current.play();
     setPlaying(!playing);
+  }; */
+
+  const togglePlay = async () => {
+    if (!audioRef.current) return;
+
+    try {
+      if (playing) {
+        audioRef.current.pause();
+      } else {
+        await audioRef.current.play();
+      }
+      setPlaying(!playing);
+    } catch (err) {
+      console.warn("Playback error:", err);
+    }
   };
 
   const handleTimeUpdate = () => setCurrentTime(audioRef.current.currentTime);
-  const handleLoadedMetadata = () => setDuration(audioRef.current.duration);
+  const handleLoadedMetadata = () => {
+    setDuration(audioRef.current.duration);
+    setLoading(false);
+  };
   const handleSeek = (e) => {
     audioRef.current.currentTime = e.target.value;
     setCurrentTime(e.target.value);
@@ -104,6 +123,14 @@ export default function PlayerPage({ onTogglePlaylist }) {
       : `${Math.floor(t / 60)}:${("0" + Math.floor(t % 60)).slice(-2)}`;
 
   const backgroundGradient = `linear-gradient(to bottom, ${theme.darkMuted} 0%, ${theme.muted} 100%)`;
+
+  const handleCanPlayThrough = () => {
+    setLoading(false);
+    if (!playing) {
+      audioRef.current.play();
+      setPlaying(true);
+    }
+  };
 
   return (
     <div
@@ -152,13 +179,21 @@ export default function PlayerPage({ onTogglePlaylist }) {
         {/* Audio */}
         {meta.url && (
           <audio
+            onCanPlayThrough={handleCanPlayThrough}
+            key={meta.url}
+            preload="auto"
             ref={audioRef}
             src={meta.url}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={() => {
-              setPlaying(false);
-              playNext();
+              if (repeat === "one") {
+                audioRef.current.currentTime = 0;
+                audioRef.current.play();
+              } else {
+                setPlaying(false);
+                playNext();
+              }
             }}
             autoPlay
           />
@@ -167,6 +202,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
         {/* Seekbar */}
         <div className="mt-6 w-full">
           <input
+            disabled={loading}
             type="range"
             min="0"
             max={duration}
@@ -201,7 +237,9 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
           <button
             onClick={togglePlay}
-            className="p-4 rounded-full shadow-lg hover:scale-105 transition"
+            className={`p-4 rounded-full shadow-lg hover:scale-105 transition ${
+              loading && "animate-spin"
+            }`}
             style={{
               backgroundColor: theme.vibrant,
               color: theme.darkVibrant,

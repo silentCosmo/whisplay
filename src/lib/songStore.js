@@ -1,19 +1,74 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 const useSongStore = create(
   persist(
     (set, get) => ({
       songs: [],
+      shuffledSongs: [],
       currentSong: null,
       currentIndex: -1,
       shuffle: false,
-      repeat: "all", // values: "all", "one", "none"
+      repeat: "all", // "all", "one", "none"
 
       // Setters
-      setSongs: (songs) => set({ songs }),
-      setShuffle: (val) => set({ shuffle: val }),
-      toggleShuffle: () => set((s) => ({ shuffle: !s.shuffle })),
+      /* setSongs: (songs) => {
+        const shuffle = get().shuffle;
+        set({
+          songs,
+          shuffledSongs: shuffle ? shuffleArray(songs) : [],
+        });
+      }, */
+
+      setSongs: (songs) => {
+        set({
+          songs,
+          shuffledSongs: [],
+        });
+      },
+
+      setShuffle: (val) => {
+        const { songs } = get();
+        set({
+          shuffle: val,
+          shuffledSongs: val ? shuffleArray(songs) : [],
+        });
+      },
+
+      toggleShuffle: () => {
+        const { shuffle, songs } = get();
+        if (!shuffle) {
+          // Turning shuffle ON
+          set({
+            shuffle: true,
+            shuffledSongs: shuffleArray(songs),
+          });
+        } else {
+          // Turning shuffle OFF
+          set({
+            shuffle: false,
+            shuffledSongs: [],
+          });
+        }
+      },
+
+      /* toggleShuffle: () => {
+        const { shuffle, songs } = get();
+        set({
+          shuffle: !shuffle,
+          shuffledSongs: !shuffle ? shuffleArray(songs) : [],
+        });
+      }, */
+
       setRepeat: (mode) => set({ repeat: mode }),
       toggleRepeat: () =>
         set((s) => {
@@ -22,16 +77,43 @@ const useSongStore = create(
         }),
 
       setCurrentSong: (song) => {
-        const index = get().songs.findIndex((s) => s.id === song.id);
+        const list = get().shuffle ? get().shuffledSongs : get().songs;
+        const index = list.findIndex((s) => s.id === song.id);
         set({ currentSong: song, currentIndex: index });
       },
 
-      getShuffledSongs: () => {
-        const { songs } = get();
-        return [...songs].sort(() => Math.random() - 0.5);
-      },
+      getShuffledSongs: () => get().shuffledSongs,
 
-      // Playback Controls
+      /* playNext: () => {
+        const {
+          songs,
+          currentIndex,
+          shuffle,
+          repeat,
+          setCurrentSong,
+          currentSong,
+        } = get();
+
+        const list = shuffle ? shuffledSongs : songs;
+
+        if (repeat === "one") {
+          setCurrentSong(currentSong);
+          return;
+        }
+
+        let nextIndex = currentIndex + 1;
+
+        if (nextIndex >= list.length) {
+          if (repeat === "all") {
+            nextIndex = 0;
+          } else {
+            return; // no repeat
+          }
+        }
+
+        set({ currentIndex: nextIndex, currentSong: list[nextIndex] });
+      }, */
+
       playNext: () => {
         const {
           songs,
@@ -42,12 +124,8 @@ const useSongStore = create(
           currentSong,
         } = get();
 
-        if (repeat === "one") {
-          // replay the same song
-          setCurrentSong(currentSong);
-          return;
-        }
-
+        // Only repeat the same song when it ends naturally
+        // Not when user presses "Next"
         if (shuffle) {
           const randomIndex = Math.floor(Math.random() * songs.length);
           setCurrentSong(songs[randomIndex]);
@@ -60,7 +138,7 @@ const useSongStore = create(
           if (repeat === "all") {
             nextIndex = 0;
           } else {
-            return; // no repeat
+            return; // no repeat, stop at end
           }
         }
 
@@ -68,18 +146,21 @@ const useSongStore = create(
       },
 
       playPrevious: () => {
-        const { songs, currentIndex, setCurrentSong } = get();
-        const prevIndex = currentIndex - 1;
+        const { songs, shuffledSongs, currentIndex, shuffle, setCurrentSong } =
+          get();
 
-        if (prevIndex >= 0) {
-          setCurrentSong(songs[prevIndex]);
-        } else {
-          setCurrentSong(songs[songs.length - 1]); // loop to last
+        const list = shuffle ? shuffledSongs : songs;
+        let prevIndex = currentIndex - 1;
+
+        if (prevIndex < 0) {
+          prevIndex = list.length - 1;
         }
+
+        set({ currentIndex: prevIndex, currentSong: list[prevIndex] });
       },
     }),
     {
-      name: "song-store", // localStorage key
+      name: "song-store",
     }
   )
 );

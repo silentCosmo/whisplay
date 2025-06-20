@@ -40,7 +40,7 @@ export async function GET(req) {
       headers: {
         "Content-Type": mimeType,
         "Content-Disposition": `inline; filename="${fileName}"`,
-        "Cache-Control": "no-cache",
+        "Cache-Control": "public, max-age=86400",
         "Accept-Ranges": "bytes",
         "Access-Control-Allow-Origin": "*",
       },
