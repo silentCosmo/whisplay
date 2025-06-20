@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSongStore from "@/lib/songStore";
@@ -12,7 +11,15 @@ import {
   FaStepForward,
 } from "react-icons/fa";
 import Image from "next/image";
-import VisualizerCanvas from "@/lib/visualizerCanvas";
+
+import {
+  loadAndPlaySong,
+  togglePlayPause,
+  getSeek,
+  setSeek,
+  getDuration,
+  isPlaying,
+} from "@/lib/audioPlayer";
 
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
@@ -73,16 +80,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
         muted: t.muted || "#222",
         darkMuted: t.darkMuted || "#111",
         lightMuted: t.lightMuted || "#ccc",
-        darkVibrant: t.darkVibrant || "#000",
-      });
-    } else {
-      // Default theme for fallback/default song
-      setTheme({
-        vibrant: "#ff4081",
-        muted: "#222",
-        darkMuted: "#111",
-        lightMuted: "#ccc",
-        darkVibrant: "#000",
       });
     }
 
@@ -93,10 +90,25 @@ export default function PlayerPage({ onTogglePlaylist }) {
     }
   }, [currentSong, id, router]);
 
-  const togglePlay = () => {
+  /* const togglePlay = () => {
     if (!audioRef.current) return;
     playing ? audioRef.current.pause() : audioRef.current.play();
     setPlaying(!playing);
+  }; */
+
+  const togglePlay = async () => {
+    if (!audioRef.current) return;
+
+    try {
+      if (playing) {
+        audioRef.current.pause();
+      } else {
+        await audioRef.current.play();
+      }
+      setPlaying(!playing);
+    } catch (err) {
+      console.warn("Playback error:", err);
+    }
   };
 
   const handleTimeUpdate = () => setCurrentTime(audioRef.current.currentTime);
@@ -129,6 +141,18 @@ export default function PlayerPage({ onTogglePlaylist }) {
     }
   };
 
+  useEffect(() => {
+    if (currentSong) {
+      loadAndPlaySong(currentSong, () => {
+        if (repeat === "one") {
+          loadAndPlaySong(currentSong);
+        } else {
+          playNext();
+        }
+      });
+    }
+  }, [currentSong]);
+
   return (
     <div
       className="min-h-screen relative flex items-center justify-center md:rounded-3xl"
@@ -148,7 +172,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
           Now Playing
         </span>
 
-        {/* <div className="w-64 h-64 rounded-3xl overflow-hidden shadow-xl mb-4">
+        <div className="w-64 h-64 rounded-3xl overflow-hidden shadow-xl mb-4">
           <Image
             src={meta.cover}
             width={400}
@@ -156,31 +180,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
             alt={meta.title}
             className="object-cover w-full h-full"
           />
-        </div> */}
-
-        <div className="relative w-64 h-64 rounded-3xl overflow-hidden shadow-xl mb-4">
-          <Image
-            src={meta.cover}
-            width={400}
-            height={400}
-            alt={meta.title}
-            className="object-cover w-full h-full"
-          />
-          <VisualizerCanvas audioRef={audioRef} theme={theme} mode="wave" style={{
-              filter: "drop-shadow(0 0 6px " + theme.vibrant + ")",
-            }} />
         </div>
-
-        {/*< div className="relative w-full h-28 mt-4 rounded-xl overflow-hidden shadow-md">
-          <VisualizerCanvas
-            audioRef={audioRef}
-            theme={theme}
-            mode="wave"
-            style={{
-              filter: "drop-shadow(0 0 6px " + theme.vibrant + ")",
-            }}
-          />
-        </div> */}
 
         <h1
           className="text-2xl font-bold text-center"
@@ -221,7 +221,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
         )}
 
         {/* Seekbar */}
-        {/* <div className="mt-6 w-full">
+        <div className="mt-6 w-full">
           <input
             disabled={loading}
             type="range"
@@ -244,35 +244,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
-        </div> */}
-
-        <div className="mt-6 w-full">
-          <div className="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden group">
-            <div
-              className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
-              style={{
-                width: `${(currentTime / duration) * 100}%`,
-                backgroundColor: theme.vibrant,
-              }}
-            ></div>
-            <input
-              disabled={loading}
-              type="range"
-              min="0"
-              max={duration}
-              step="0.1"
-              value={currentTime}
-              onChange={handleSeek}
-              className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-            />
-          </div>
-          <div
-            className="flex justify-between text-xs mt-1"
-            style={{ color: theme.lightMuted }}
-          >
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
         </div>
 
         {/* Controls */}
@@ -285,20 +256,19 @@ export default function PlayerPage({ onTogglePlaylist }) {
             <FaStepBackward />
           </button>
 
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            className={`p-4 rounded-full shadow-lg`}
+          <button
+            onClick={togglePlay}
+            className={`p-4 rounded-full shadow-lg hover:scale-105 transition ${
+              loading && "animate-spin"
+            }`}
             style={{
               backgroundColor: theme.vibrant,
               color: theme.darkVibrant,
               boxShadow: `0 0 20px ${theme.vibrant}80`,
             }}
-            onClick={togglePlay}
           >
             {playing ? <FaPause size={20} /> : <FaPlay size={20} />}
-          </motion.button>
+          </button>
 
           <button
             onClick={playNext}
@@ -319,11 +289,11 @@ export default function PlayerPage({ onTogglePlaylist }) {
             step="0.01"
             value={volume}
             onChange={handleVolumeChange}
-            className={`w-10/12 h-2 rounded-full cursor-pointer transition-all duration-200
-      focus:ring-2 focus:ring-offset-2 focus:ring-[${theme.vibrant}]`}
+            className="w-10/12"
             style={{
               accentColor: theme.vibrant,
-              boxShadow: `0 0 8px ${theme.vibrant}66`,
+              height: "4px",
+              borderRadius: "2px",
             }}
           />
         </div>
