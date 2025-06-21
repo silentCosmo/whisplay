@@ -10,7 +10,15 @@ import {
   FaVolumeUp,
   FaStepBackward,
   FaStepForward,
+  FaSpinner,
+  FaCompactDisc,
 } from "react-icons/fa";
+import { SiDiscogs } from "react-icons/si";
+import { TbDisc } from "react-icons/tb";
+import { PiDiscDuotone } from "react-icons/pi";
+import { PiDiscFill } from "react-icons/pi";
+import { GiCompactDisc } from "react-icons/gi";
+
 import Image from "next/image";
 import VisualizerCanvas from "@/lib/visualizerCanvas";
 
@@ -280,7 +288,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
           <button
             onClick={playPrevious}
             className="text-2xl hover:scale-110 transition"
-            style={{ color: theme.muted }}
+            style={{ color: theme.darkVibrant }}
           >
             <FaStepBackward />
           </button>
@@ -289,7 +297,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
             whileTap={{ scale: 0.9 }}
             whileHover={{ scale: 1.1 }}
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            className={`p-4 rounded-full shadow-lg`}
+            className={`rounded-full shadow-lg ${loading?'animate-spi p-1': "p-4"}`}
             style={{
               backgroundColor: theme.vibrant,
               color: theme.darkVibrant,
@@ -297,13 +305,14 @@ export default function PlayerPage({ onTogglePlaylist }) {
             }}
             onClick={togglePlay}
           >
-            {playing ? <FaPause size={20} /> : <FaPlay size={20} />}
+            {/* {playing ? <FaPause size={20} /> : <FaPlay size={20} />} */}
+            {loading ? <FaCompactDisc className="animate-spin" size={32} style={{color: theme.darkVibrant}} /> : playing ? <FaPause /> : <FaPlay />}
           </motion.button>
 
           <button
             onClick={playNext}
             className="text-2xl hover:scale-110 transition"
-            style={{ color: theme.muted }}
+            style={{ color: theme.darkVibrant }}
           >
             <FaStepForward />
           </button>

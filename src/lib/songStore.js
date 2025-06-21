@@ -142,6 +142,15 @@ const useSongStore = create(
           }
         }
 
+        const nextSong = songs[nextIndex];
+
+        // Prewarm next audio stream
+        fetch(`/api/song?id=${nextSong.id}`, { method: "HEAD" }).catch((err) =>
+          console.warn("Prewarm failed:", err)
+        );
+
+        set({ currentIndex: nextIndex, currentSong: nextSong });
+
         setCurrentSong(songs[nextIndex]);
       },
 

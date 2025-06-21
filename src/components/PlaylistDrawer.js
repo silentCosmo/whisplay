@@ -24,6 +24,12 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
     if (isMobile && onClose) onClose(); // close drawer on mobile
   };
 
+  const handleHover = (song) => {
+    fetch(`/api/song?id=${song.id}`, { method: "HEAD" }).catch((err) =>
+      console.warn("Hover prewarm failed:", err)
+    );
+  };
+
   return (
     <aside
       className={`${
@@ -102,6 +108,7 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
           return (
             <li
               key={song.id}
+              onMouseEnter={() => handleHover(song)}
               className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
                 active ? "shadow-md ring-1 ring-white/30" : "hover:bg-white/10"
               }`}

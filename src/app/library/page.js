@@ -23,8 +23,8 @@ export default function Library() {
           cover: song.cover || "/default.png", // fallback
         }));
 
-        setSongs(formattedSongs);          // For this UI
-        setGlobalSongs(formattedSongs);    // For global store
+        setSongs(formattedSongs); // For this UI
+        setGlobalSongs(formattedSongs); // For global store
       } catch (err) {
         console.error("💥 Failed to fetch songs:", err);
       }
@@ -33,10 +33,17 @@ export default function Library() {
     fetchSongs();
   }, []);
 
+  const handleHover = (song) => {
+    fetch(`/api/song?id=${song.id}`, { method: "HEAD" }).catch((err) =>
+      console.warn("Hover prewarm failed:", err)
+    );
+  };
+
   return (
     <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
       {songs.map((song) => (
         <div
+          onMouseEnter={() => handleHover(song)}
           key={song.id}
           onClick={() => {
             setCurrentSong(song);
