@@ -1,5 +1,6 @@
 "use client";
 
+import usePersistentState from "@/lib/usePersistentState";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -10,17 +11,13 @@ import {
   FaVolumeUp,
   FaStepBackward,
   FaStepForward,
-  FaSpinner,
   FaCompactDisc,
 } from "react-icons/fa";
-import { SiDiscogs } from "react-icons/si";
-import { TbDisc } from "react-icons/tb";
-import { PiDiscDuotone } from "react-icons/pi";
-import { PiDiscFill } from "react-icons/pi";
-import { GiCompactDisc } from "react-icons/gi";
 
 import Image from "next/image";
 import VisualizerCanvas from "@/lib/visualizerCanvas";
+
+import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
 
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
@@ -32,8 +29,30 @@ export default function PlayerPage({ onTogglePlaylist }) {
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  const [beatLevel, setBeatLevel] = useState(0);
+
+  const [volume, setVolume] = usePersistentState("volume", 1);
+  const [vizMode, setVizMode] = usePersistentState("vizMode", "spectrum");
+  const [showCover, setShowCover] = usePersistentState("showCover", true);
+
+  const modes = [
+    "spectrum",
+    "mirror",
+    "wave",
+    "aura",
+    "blob",
+    "liquid",
+    "pulsewave",
+    "sparkle",
+  ];
+
+  const toggleMode = () => {
+    const currentIndex = modes.indexOf(vizMode);
+    const next = (currentIndex + 1) % modes.length;
+    setVizMode(modes[next]);
+  };
 
   const [theme, setTheme] = useState({
     vibrant: "#e91e63",
@@ -50,6 +69,24 @@ export default function PlayerPage({ onTogglePlaylist }) {
     cover: "/loading.jpg",
     url: "",
   });
+
+  /* Volume */
+  const [muted, setMuted] = useState(false);
+  const [hovering, setHovering] = useState(false);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = muted ? 0 : volume;
+    }
+  }, [volume, muted]);
+
+  const toggleMute = () => setMuted((prev) => !prev);
+
+  const getVolumeIcon = () => {
+    if (muted || volume === 0) return <FaVolumeMute />;
+    if (volume < 0.5) return <FaVolumeDown />;
+    return <FaVolumeUp />;
+  };
 
   useEffect(() => {
     if (!currentSong && id) {
@@ -166,17 +203,61 @@ export default function PlayerPage({ onTogglePlaylist }) {
           />
         </div> */}
 
-        <div className="relative w-64 h-64 rounded-3xl overflow-hidden shadow-xl mb-4">
+        <motion.div
+          className={`relative w-64 h-64 rounded-3xl overflow-hidden ${
+            showCover && "shadow-xl"
+          } mb-4 mt-3 aspect-square`}
+          animate={{
+            scale: 1 + beatLevel * 0.06, // subtle pulse (scale between 1.0 and 1.06)
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 20,
+          }}
+          //style={{boxShadow: `0 0 ${10 + beatLevel * 30}px ${theme.vibrant}66`,}}
+        >
           <Image
             src={meta.cover}
             width={400}
             height={400}
             alt={meta.title}
-            className="object-cover w-full h-full"
+            className="object-cover w-full h-full transition duration-700 ease-in-out"
+            style={{
+              filter:
+                playing && !loading ? "brightness(0.5)" : "brightness(0.9)",
+              opacity: showCover ? 1 : 0,
+            }}
+            onClick={toggleMode}
           />
-          <VisualizerCanvas audioRef={audioRef} theme={theme} mode="wave" style={{
-              filter: "drop-shadow(0 0 6px " + theme.vibrant + ")",
-            }} />
+          <VisualizerCanvas
+            audioRef={audioRef}
+            theme={theme}
+            mode={vizMode}
+            onBeat={(level) => {
+              // Normalize and cap level
+              const intensity = Math.min(level / 200, 1);
+              setBeatLevel(intensity);
+            }}
+            /* style={{
+              filter: `drop-shadow(0 0 6px ${theme.vibrant})`,
+            }} */
+          />
+        </motion.div>
+
+        <div className="mt-4 flex gap-3 items-center justify-center text-xs text-white/60">
+          <button
+            onClick={toggleMode}
+            className="px-3 py-1 bg-white/10 rounded-full hover:bg-white/20 transition"
+          >
+            Mode: <strong className="ml-1 capitalize">{vizMode}</strong>
+          </button>
+          <button
+            onClick={() => setShowCover(!showCover)}
+            className="px-3 py-1 bg-white/10 rounded-full hover:bg-white/20 transition"
+          >
+            {showCover ? "Hide Cover" : "Show Cover"}
+          </button>
         </div>
 
         {/*< div className="relative w-full h-28 mt-4 rounded-xl overflow-hidden shadow-md">
@@ -297,7 +378,9 @@ export default function PlayerPage({ onTogglePlaylist }) {
             whileTap={{ scale: 0.9 }}
             whileHover={{ scale: 1.1 }}
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            className={`rounded-full shadow-lg ${loading?'animate-spi p-1': "p-4"}`}
+            className={`rounded-full shadow-lg ${
+              loading ? "animate-spi p-1" : "p-4"
+            }`}
             style={{
               backgroundColor: theme.vibrant,
               color: theme.darkVibrant,
@@ -306,7 +389,17 @@ export default function PlayerPage({ onTogglePlaylist }) {
             onClick={togglePlay}
           >
             {/* {playing ? <FaPause size={20} /> : <FaPlay size={20} />} */}
-            {loading ? <FaCompactDisc className="animate-spin" size={32} style={{color: theme.darkVibrant}} /> : playing ? <FaPause /> : <FaPlay />}
+            {loading ? (
+              <FaCompactDisc
+                className="animate-spin"
+                size={32}
+                style={{ color: theme.darkVibrant }}
+              />
+            ) : playing ? (
+              <FaPause />
+            ) : (
+              <FaPlay />
+            )}
           </motion.button>
 
           <button
@@ -319,7 +412,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
         </div>
 
         {/* Volume */}
-        <div className="flex items-center gap-3 mt-6 w-full px-4">
+        {/* <div className="flex items-center gap-3 mt-6 w-full px-4">
           <FaVolumeUp className="text-lg" style={{ color: theme.lightMuted }} />
           <input
             type="range"
@@ -335,6 +428,64 @@ export default function PlayerPage({ onTogglePlaylist }) {
               boxShadow: `0 0 8px ${theme.vibrant}66`,
             }}
           />
+        </div> */}
+
+        {/* Volume Control */}
+        <div className="w-full mt-6 px-4">
+          <div className="flex items-center gap-3">
+            <button
+              className="text-lg hover:scale-110 transition"
+              onClick={toggleMute}
+              style={{ color: theme.lightMuted }}
+            >
+              {getVolumeIcon()}
+            </button>
+
+            <div
+              className="relative w-10/12 h-3 rounded-full bg-gray-700 group overflow-hidden cursor-pointer"
+              onMouseEnter={() => setHovering(true)}
+              onMouseLeave={() => setHovering(false)}
+              onTouchStart={() => setHovering(true)}
+              onTouchEnd={() => setHovering(false)}
+            >
+              {/* Filled Volume */}
+              <div
+                className="absolute top-0 left-0 h-full rounded-full transition-all"
+                style={{
+                  width: `${(muted ? 0 : volume) * 100}%`,
+                  backgroundColor: theme.vibrant,
+                  boxShadow: `0 0 8px ${theme.vibrant}80`,
+                }}
+              ></div>
+
+              {/* Range Input (hidden visually, interactive layer) */}
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={muted ? 0 : volume}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  setMuted(val === 0);
+                  setVolume(val);
+                }}
+                className="absolute top-0 left-0 w-full h-full opacity-0"
+              />
+
+              {/* Tooltip */}
+              {hovering && (
+                <div
+                  className="absolute -top-8 left-[calc(var(--vol)*100%)] transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-full bg-black/70 shadow-lg pointer-events-none"
+                  style={{
+                    "--vol": muted ? 0 : volume,
+                  }}
+                >
+                  {Math.round((muted ? 0 : volume) * 100)}%
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {onTogglePlaylist && (

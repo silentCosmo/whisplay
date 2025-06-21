@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import useSongStore from "@/lib/songStore";
 import PlayerPage from "./page";
 import PlaylistDrawer from "@/components/PlaylistDrawer";
+import { useRouter } from "next/navigation";
+import { FaArrowLeft } from "react-icons/fa";
 
 export default function PlayerLayout() {
+  const router = useRouter();
   const { currentSong } = useSongStore();
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [theme, setTheme] = useState({
@@ -29,6 +32,33 @@ export default function PlayerLayout() {
   return (
     <div className="min-h-screen flex flex-col sm:flex-row relative">
       <div className="flex-1 relative">
+        
+        <header
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-5xl px-6 py-3 rounded-full flex justify-between items-center backdrop-blur-md bg-black/30 border border-white/10 shadow-lg"
+          style={{ color: theme.lightMuted }}
+        >
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-1 text-sm hover:text-white transition font-medium"
+          >
+            <FaArrowLeft />
+            Home
+          </button>
+
+          <span className="tracking-wide text-sm sm:text-base font-semibold text-white/80">
+            <span
+              style={{
+                color: theme.vibrant,
+                fontWeight: 800,
+                letterSpacing: "0.1em",
+              }}
+            >
+              Whisplay
+            </span>
+          </span>
+
+          <div className="text-xs opacity-60">v1.0</div>
+        </header>
         <PlayerPage onTogglePlaylist={() => setShowPlaylist((prev) => !prev)} />
       </div>
 
