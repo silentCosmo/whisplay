@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { getAudioContext } from "./audioContext";
 
 export default function VisualizerCanvas({
   audioRef,
@@ -12,14 +13,29 @@ export default function VisualizerCanvas({
   useEffect(() => {
     if (!audioRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioCtx.createAnalyser();
-    const source = audioCtx.createMediaElementSource(audioRef.current);
+  const canvas = canvasRef.current;
+  const ctx = canvas.getContext("2d");
 
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
+  const audioCtx = getAudioContext();
+
+    // Only create source once
+    if (!audioRef.current._sourceNode) {
+      try {
+        const source = audioCtx.createMediaElementSource(audioRef.current);
+        source.connect(audioCtx.destination);
+        audioRef.current._sourceNode = source;
+      } catch (err) {
+        console.error("Error creating source node:", err);
+        return;
+      }
+    }
+
+    const analyser = audioCtx.createAnalyser();
+    try {
+      audioRef.current._sourceNode.connect(analyser);
+    } catch (err) {
+      console.warn("Already connected? Skipping.", err);
+    }
 
     analyser.fftSize = 128;
     const bufferLength = analyser.frequencyBinCount;
@@ -27,6 +43,8 @@ export default function VisualizerCanvas({
 
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
+
+    let animationId;
 
     const draw = () => {
       requestAnimationFrame(draw);
@@ -221,8 +239,10 @@ export default function VisualizerCanvas({
     draw();
 
     return () => {
-      source.disconnect();
-      analyser.disconnect();
+      try {
+        analyser.disconnect();
+      } catch (e) {}
+      cancelAnimationFrame(animationId);
     };
   }, [audioRef, theme, mode]);
 

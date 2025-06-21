@@ -42,7 +42,6 @@ export default function PlayerLayout() {
             className="flex items-center gap-1 text-sm hover:text-white transition font-medium"
           >
             <FaArrowLeft />
-            Home
           </button>
 
           <span className="tracking-wide text-sm sm:text-base font-semibold text-white/80">

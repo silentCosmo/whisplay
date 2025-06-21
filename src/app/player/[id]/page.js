@@ -204,9 +204,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
         </div> */}
 
         <motion.div
-          className={`relative w-64 h-64 rounded-3xl overflow-hidden ${
-            showCover && "shadow-xl"
-          } mb-4 mt-3 aspect-square`}
+          className={`relative w-64 h-64 rounded-3xl overflow-hidden ${showCover ? "shadow-xl" : ""} mb-4 mt-3 aspect-square`}
           animate={{
             scale: 1 + beatLevel * 0.06, // subtle pulse (scale between 1.0 and 1.06)
           }}
@@ -250,7 +248,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
             onClick={toggleMode}
             className="px-3 py-1 bg-white/10 rounded-full hover:bg-white/20 transition"
           >
-            Mode: <strong className="ml-1 capitalize">{vizMode}</strong>
+            Mode: <strong suppressHydrationWarning className="ml-1 capitalize">{vizMode}</strong>
           </button>
           <button
             onClick={() => setShowCover(!showCover)}
