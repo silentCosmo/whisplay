@@ -5,6 +5,7 @@ import PlayerPage from "./page";
 import PlaylistDrawer from "@/components/PlaylistDrawer";
 import { useRouter } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
+import Link from "next/link";
 
 export default function PlayerLayout() {
   const router = useRouter();
@@ -32,17 +33,17 @@ export default function PlayerLayout() {
   return (
     <div className="min-h-screen flex flex-col sm:flex-row relative">
       <div className="flex-1 relative">
-        
         <header
           className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-5xl px-6 py-3 rounded-full flex justify-between items-center backdrop-blur-md bg-black/30 border border-white/10 shadow-lg"
           style={{ color: theme.lightMuted }}
         >
-          <button
-            onClick={() => router.push("/")}
+          <Link
+            href="/"
+            prefetch
             className="flex items-center gap-1 text-sm hover:text-white transition font-medium"
           >
             <FaArrowLeft />
-          </button>
+          </Link>
 
           <span className="tracking-wide text-sm sm:text-base font-semibold text-white/80">
             <span

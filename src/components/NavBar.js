@@ -6,7 +6,6 @@ import { FaHome, FaMusic, FaUser } from "react-icons/fa";
 const navItems = [
   { href: "/", label: "Home", icon: <FaHome /> },
   { href: "/library", label: "Library", icon: <FaMusic /> },
-  { href: "/profile", label: "Profile", icon: <FaUser /> },
 ];
 
 export default function NavBar() {

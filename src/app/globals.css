@@ -33,3 +33,8 @@ body {
   100% { transform: translateX(-100%); }
 }
 
+.scroll-pause:hover {
+  animation-play-state: paused;
+}
+
+
