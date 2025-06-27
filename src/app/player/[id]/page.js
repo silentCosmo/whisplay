@@ -1,7 +1,7 @@
 "use client";
 
 import usePersistentState from "@/lib/usePersistentState";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSongStore from "@/lib/songStore";
@@ -12,7 +12,24 @@ import {
   FaStepBackward,
   FaStepForward,
   FaCompactDisc,
+  FaWaveSquare,
+  FaChartBar,
+  FaSun,
+  FaTint,
+  FaFireAlt,
+  FaBolt,
+  FaCogs,
+  FaCircleNotch,
+  FaDotCircle,
+  FaStar,
+  FaCircle,
 } from "react-icons/fa";
+import { LuAudioWaveform } from "react-icons/lu";
+import { PiWaveformBold } from "react-icons/pi";
+import { SiCircle } from "react-icons/si";
+import { RxBarChart } from "react-icons/rx";
+import { GiBurstBlob } from "react-icons/gi";
+import { RiScan2Line, RiBubbleChartFill } from "react-icons/ri";
 
 import Image from "next/image";
 import VisualizerCanvas from "@/lib/visualizerCanvas";
@@ -22,23 +39,49 @@ import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
   const router = useRouter();
-  const { currentSong, setCurrentSong, playNext, playPrevious, repeat } =
-    useSongStore();
+  const {
+    audioRef,
+    currentSong,
+    setCurrentSong,
+    playNext,
+    playPrevious,
+    repeat,
+    playing,
+    setPlaying,
+    duration,
+    currentTime,
+    progress,
+    //setProgress,
+    setDuration,
+  } = useSongStore();
 
-  const audioRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
+  const modeIcons = {
+    mirror: <PiWaveformBold />,
+    wave: <LuAudioWaveform />,
+    aura: <FaCircle />,
+    blob: <GiBurstBlob />,
+    liquid: <FaTint />,
+    pulsewave: <RiScan2Line />,
+    sparkle: <RiBubbleChartFill />,
+    rings: <SiCircle />,
+    beatsplash: <RxBarChart />,
+  };
+
+  //const [playing, setPlaying] = useState(false);
+  //const [duration, setDuration] = useState(0);
+  //const [currentTime, setCurrentTime] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [vizReady, setVizReady] = useState(false);
 
   const [beatLevel, setBeatLevel] = useState(0);
 
   const [volume, setVolume] = usePersistentState("volume", 1);
-  const [vizMode, setVizMode] = usePersistentState("vizMode", "spectrum");
+  const [vizMode, setVizMode] = usePersistentState("vizMode", "beatsplash");
   const [showCover, setShowCover] = usePersistentState("showCover", true);
+  const [showModeName, setShowModeName] = useState(false);
 
   const modes = [
-    "spectrum",
+    //"spectrum",
     "mirror",
     "wave",
     "aura",
@@ -46,7 +89,22 @@ export default function PlayerPage({ onTogglePlaylist }) {
     "liquid",
     "pulsewave",
     "sparkle",
+    "rings",
+    "beatsplash",
   ];
+
+  useEffect(() => {
+    if (vizMode) {
+      setVizReady(true);
+    }
+  }, [vizMode]);
+
+  useEffect(() => {
+    if (showModeName) {
+      const timeout = setTimeout(() => setShowModeName(false), 900);
+      return () => clearTimeout(timeout);
+    }
+  }, [showModeName]);
 
   const toggleMode = () => {
     const currentIndex = modes.indexOf(vizMode);
@@ -75,8 +133,8 @@ export default function PlayerPage({ onTogglePlaylist }) {
   const [hovering, setHovering] = useState(false);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = muted ? 0 : volume;
+    if (audioRef) {
+      audioRef.volume = muted ? 0 : volume;
     }
   }, [volume, muted]);
 
@@ -105,6 +163,20 @@ export default function PlayerPage({ onTogglePlaylist }) {
         );
     }
   }, [id, currentSong]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const audio = useSongStore.getState().audioRef;
+      if (audio && !isNaN(audio.duration)) {
+        const { currentTime, duration } = audio;
+        const progress = (currentTime / duration) * 100;
+        useSongStore.getState().setCurrentTime(currentTime);
+        useSongStore.getState().setProgress(progress);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [currentSong]);
 
   useEffect(() => {
     if (!currentSong) return;
@@ -139,23 +211,41 @@ export default function PlayerPage({ onTogglePlaylist }) {
   }, [currentSong, id, router]);
 
   const togglePlay = () => {
-    if (!audioRef.current) return;
-    playing ? audioRef.current.pause() : audioRef.current.play();
+    if (!audioRef) return;
+    playing ? audioRef.pause() : audioRef.play();
     setPlaying(!playing);
   };
 
-  const handleTimeUpdate = () => setCurrentTime(audioRef.current.currentTime);
-  const handleLoadedMetadata = () => {
-    setDuration(audioRef.current.duration);
+  //const handleTimeUpdate = () => setCurrentTime(audioRef.currentTime);
+  /* const handleLoadedMetadata = () => {
+    setDuration(audioRef.duration);
     setLoading(false);
-  };
+  }; */
+
+  useEffect(() => {
+    if (duration > 0) {
+      setLoading(false);
+    }
+  }, [duration]);
+
+  /* const handleSeek = (e) => {
+    const time = parseFloat(e.target.value);
+    if (audioRef?.current) {
+      audioRef.current.currentTime = time;
+    }
+    setProgress(time);
+  }; */
+
   const handleSeek = (e) => {
-    audioRef.current.currentTime = e.target.value;
-    setCurrentTime(e.target.value);
+    const time = parseFloat(e.target.value);
+    useSongStore.getState().seekTo(time);
   };
+
   const handleVolumeChange = (e) => {
-    const vol = e.target.value;
-    audioRef.current.volume = vol;
+    const vol = parseFloat(e.target.value);
+    if (audioRef?.current) {
+      audioRef.current.volume = vol;
+    }
     setVolume(vol);
   };
 
@@ -169,10 +259,12 @@ export default function PlayerPage({ onTogglePlaylist }) {
   const handleCanPlayThrough = () => {
     setLoading(false);
     if (!playing) {
-      audioRef.current.play();
+      audioRef.play();
       setPlaying(true);
     }
   };
+
+  console.log("Visualizer :", vizMode);
 
   return (
     <div
@@ -186,12 +278,12 @@ export default function PlayerPage({ onTogglePlaylist }) {
       <div className="absolute inset-0 bg-black/50" />
 
       <div className="z-10 relative max-w-lg w-full bg-transparent p-6 flex flex-col items-center">
-        <span
+        {/* <span
           className="uppercase text-xs font-semibold"
           style={{ color: theme.lightMuted }}
         >
           Now Playing
-        </span>
+        </span> */}
 
         {/* <div className="w-64 h-64 rounded-3xl overflow-hidden shadow-xl mb-4">
           <Image
@@ -203,59 +295,109 @@ export default function PlayerPage({ onTogglePlaylist }) {
           />
         </div> */}
 
-        <motion.div
-          className={`relative w-64 h-64 rounded-3xl overflow-hidden ${showCover ? "shadow-xl" : ""} mb-4 mt-3 aspect-square`}
-          animate={{
-            scale: 1 + beatLevel * 0.06, // subtle pulse (scale between 1.0 and 1.06)
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 20,
-          }}
-          //style={{boxShadow: `0 0 ${10 + beatLevel * 30}px ${theme.vibrant}66`,}}
-        >
-          <Image
-            src={meta.cover}
-            width={400}
-            height={400}
-            alt={meta.title}
-            className="object-cover w-full h-full transition duration-700 ease-in-out"
+        <div className="relative w-full h-[400px] mb-6 flex items-center justify-center">
+          <motion.div
+            className="relative overflow-hidden"
+            onClick={(e) => {
+              if (e.target.tagName !== "INPUT") setShowCover(!showCover);
+            }}
             style={{
-              filter:
-                playing && !loading ? "brightness(0.5)" : "brightness(0.9)",
-              opacity: showCover ? 1 : 0,
+              borderRadius: showCover ? 24 : 8,
+              aspectRatio: "1 / 1",
             }}
-            onClick={toggleMode}
-          />
-          <VisualizerCanvas
-            audioRef={audioRef}
-            theme={theme}
-            mode={vizMode}
-            onBeat={(level) => {
-              // Normalize and cap level
-              const intensity = Math.min(level / 200, 1);
-              setBeatLevel(intensity);
+            animate={{
+              width: showCover ? 256 : 400,
+              height: showCover ? 256 : 400,
+              scale: 1 + beatLevel * 0.06,
             }}
-            /* style={{
-              filter: `drop-shadow(0 0 6px ${theme.vibrant})`,
-            }} */
-          />
-        </motion.div>
+            transition={{
+              type: "spring",
+              stiffness: 200,
+              damping: 22,
+            }}
+          >
+            {/* Cover Image Layer */}
+            <AnimatePresence mode="wait">
+              {showCover && (
+                <motion.div
+                  key="cover"
+                  className="absolute inset-0 z-10"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.05 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                >
+                  <Image
+                    src={meta.cover}
+                    width={400}
+                    height={400}
+                    alt={meta.title}
+                    className="object-cover w-full h-full"
+                    style={{
+                      filter:
+                        playing && !loading
+                          ? "brightness(0.5)"
+                          : "brightness(0.9)",
+                    }}
+                    //onClick={toggleMode}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-        <div className="mt-4 flex gap-3 items-center justify-center text-xs text-white/60">
+            {/* Visualizer */}
+            <div className="absolute inset-0 z-20 pointer-events-none">
+              <VisualizerCanvas
+                audioRef={audioRef}
+                theme={theme}
+                mode={vizMode}
+                onBeat={(level) => {
+                  const intensity = Math.min(level / 200, 1);
+                  setBeatLevel(intensity);
+                }}
+              />
+            </div>
+          </motion.div>
+        </div>
+
+        <div
+          className="mt-4 flex gap-3 items-center justify-center text-xs relative"
+          style={{ color: theme.lightMuted }}
+        >
           <button
-            onClick={toggleMode}
-            className="px-3 py-1 bg-white/10 rounded-full hover:bg-white/20 transition"
+            disabled={!vizReady}
+            onClick={() => {
+              toggleMode();
+              setShowModeName(true);
+            }}
+            className={`p-3 rounded-2xl transition text-xl active:scale-50
+      ${
+        vizReady
+          ? "rbg-black/20 ractive:bg-black/5"
+          : "bg-white/5 animate-pulse cursor-not-allowed"
+      }`}
           >
-            Mode: <strong suppressHydrationWarning className="ml-1 capitalize">{vizMode}</strong>
+            {vizReady ? (
+              modeIcons[vizMode]
+            ) : (
+              <FaCircleNotch className="animate-spin" />
+            )}
           </button>
-          <button
-            onClick={() => setShowCover(!showCover)}
-            className="px-3 py-1 bg-white/10 rounded-full hover:bg-white/20 transition"
-          >
-            {showCover ? "Hide Cover" : "Show Cover"}
-          </button>
+
+          <AnimatePresence>
+            {showModeName && (
+              <motion.div
+                key="mode-name"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ duration: 0.5 }}
+                className="absolute -top-10 px-4 py-2 rounded-xl text-sm text-white/50 shadow-lg pointer-events-none"
+              >
+                {vizMode}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/*< div className="relative w-full h-28 mt-4 rounded-xl overflow-hidden shadow-md">
@@ -269,23 +411,42 @@ export default function PlayerPage({ onTogglePlaylist }) {
           />
         </div> */}
 
-        <h1
-          className="text-2xl font-bold text-center"
-          style={{ color: theme.lightMuted }}
-        >
-          {meta.title}
-        </h1>
-        <p className="text-sm mt-1" style={{ color: theme.lightMuted }}>
-          {meta.artist}
-        </p>
-        {meta.album && (
-          <p className="italic text-xs" style={{ color: theme.lightMuted }}>
-            {meta.album}
-          </p>
-        )}
+        <div className="w-full overflow-hidden">
+          <div className="relative whitespace-nowrap">
+            <div
+              className="text-2xl font-bold text-center mx-auto w-max transition-all"
+              style={{
+                color: theme.lightMuted,
+                animation:
+                  meta.title.length > 20
+                    ? "scroll-text 15s linear infinite"
+                    : "none",
+              }}
+            >
+              {meta.title}
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full overflow-hidden mt-1">
+          <div className="relative whitespace-nowrap">
+            <div
+              className="text-sm text-center mx-auto w-max transition-all"
+              style={{
+                color: theme.lightMuted,
+                animation:
+                  meta.artist.length > 25
+                    ? "scroll-text 10s linear infinite"
+                    : "none",
+              }}
+            >
+              {meta.artist}
+            </div>
+          </div>
+        </div>
 
         {/* Audio */}
-        {meta.url && (
+        {/* {meta.url && (
           <audio
             onCanPlayThrough={handleCanPlayThrough}
             key={meta.url}
@@ -296,8 +457,8 @@ export default function PlayerPage({ onTogglePlaylist }) {
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={() => {
               if (repeat === "one") {
-                audioRef.current.currentTime = 0;
-                audioRef.current.play();
+                audioRef.currentTime = 0;
+                audioRef.play();
               } else {
                 setPlaying(false);
                 playNext();
@@ -305,7 +466,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
             }}
             autoPlay
           />
-        )}
+        )} */}
 
         {/* Seekbar */}
         {/* <div className="mt-6 w-full">
@@ -334,11 +495,11 @@ export default function PlayerPage({ onTogglePlaylist }) {
         </div> */}
 
         <div className="mt-6 w-full">
-          <div className="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden group">
+          <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
             <div
               className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
               style={{
-                width: `${(currentTime / duration) * 100}%`,
+                width: `${progress}%`,
                 backgroundColor: theme.vibrant,
               }}
             ></div>
@@ -366,8 +527,8 @@ export default function PlayerPage({ onTogglePlaylist }) {
         <div className="flex justify-center items-center gap-8 mt-8">
           <button
             onClick={playPrevious}
-            className="text-2xl hover:scale-110 transition"
-            style={{ color: theme.darkVibrant }}
+            className="text-2xl hover:scale-110 transition opacity-80"
+            style={{ color: theme.vibrant }}
           >
             <FaStepBackward />
           </button>
@@ -402,31 +563,12 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
           <button
             onClick={playNext}
-            className="text-2xl hover:scale-110 transition"
-            style={{ color: theme.darkVibrant }}
+            className="text-2xl hover:scale-110 transition opacity-80"
+            style={{ color: theme.vibrant }}
           >
             <FaStepForward />
           </button>
         </div>
-
-        {/* Volume */}
-        {/* <div className="flex items-center gap-3 mt-6 w-full px-4">
-          <FaVolumeUp className="text-lg" style={{ color: theme.lightMuted }} />
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={handleVolumeChange}
-            className={`w-10/12 h-2 rounded-full cursor-pointer transition-all duration-200
-      focus:ring-2 focus:ring-offset-2 focus:ring-[${theme.vibrant}]`}
-            style={{
-              accentColor: theme.vibrant,
-              boxShadow: `0 0 8px ${theme.vibrant}66`,
-            }}
-          />
-        </div> */}
 
         {/* Volume Control */}
         <div className="w-full mt-6 px-4">
@@ -440,7 +582,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
             </button>
 
             <div
-              className="relative w-10/12 h-3 rounded-full bg-gray-700 group overflow-hidden cursor-pointer"
+              className="relative w-10/12 h-3 rounded-full bg-black/2/*  */0 group overflow-hidden cursor-pointer"
               onMouseEnter={() => setHovering(true)}
               onMouseLeave={() => setHovering(false)}
               onTouchStart={() => setHovering(true)}

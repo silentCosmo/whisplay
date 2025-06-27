@@ -1,67 +1,52 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { getAudioContext } from "./audioContext";
+import { getAnalyser } from "./audioContext";
 
 export default function VisualizerCanvas({
   audioRef,
   theme,
-  mode = "spectrum",
+  mode = "beatsplash",
   onBeat,
 }) {
   const canvasRef = useRef();
 
   useEffect(() => {
-    if (!audioRef.current) return;
+    if (!audioRef) return;
 
-  const canvas = canvasRef.current;
-  const ctx = canvas.getContext("2d");
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-  const audioCtx = getAudioContext();
+    const analyser = getAnalyser(audioRef);
 
-    // Only create source once
-    if (!audioRef.current._sourceNode) {
-      try {
-        const source = audioCtx.createMediaElementSource(audioRef.current);
-        source.connect(audioCtx.destination);
-        audioRef.current._sourceNode = source;
-      } catch (err) {
-        console.error("Error creating source node:", err);
-        return;
-      }
-    }
-
-    const analyser = audioCtx.createAnalyser();
     try {
-      audioRef.current._sourceNode.connect(analyser);
-    } catch (err) {
-      console.warn("Already connected? Skipping.", err);
-    }
+      audioRef._sourceNode.connect(analyser);
+    } catch (err) {}
 
-    analyser.fftSize = 128;
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.8;
+
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 50;
+    const barGap = 0.25;
+
     let animationId;
 
     const draw = () => {
-      requestAnimationFrame(draw);
+      animationId = requestAnimationFrame(draw);
       analyser.getByteFrequencyData(dataArray);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       const avg = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
-      if (onBeat) onBeat(avg); // Call the pulse handler
+      if (onBeat) onBeat(avg);
 
       const barWidth = (canvas.width / bufferLength) * 1.5;
-      const barGap = 1;
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const radius = 50;
-
-      /* ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height); */
 
       switch (mode) {
         case "mirror": {
@@ -69,7 +54,7 @@ export default function VisualizerCanvas({
           for (let i = 0; i < bufferLength; i++) {
             const value = dataArray[i];
             const barHeight = value * 0.5;
-            ctx.fillStyle = theme.vibrant || "#e91e63";
+            ctx.fillStyle = theme.vibrant;
             ctx.fillRect(x, centerY, barWidth - barGap, -barHeight);
             ctx.fillRect(x, centerY, barWidth - barGap, barHeight);
             x += barWidth;
@@ -78,38 +63,21 @@ export default function VisualizerCanvas({
         }
 
         case "blob": {
-          const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
           const pulseRadius = radius + avg * 0.4;
-
-          ctx.beginPath();
           const points = 64;
-          const startAngle = 0;
-          let firstX, firstY;
-
+          ctx.beginPath();
           for (let i = 0; i <= points; i++) {
-            const angle = startAngle + (i / points) * 2 * Math.PI;
-            const noise = dataArray[i % bufferLength] * 0.3;
-            const r = pulseRadius + noise;
+            const angle = (i / points) * 2 * Math.PI;
+            const r = pulseRadius + dataArray[i % bufferLength] * 0.3;
             const x = centerX + Math.cos(angle) * r;
             const y = centerY + Math.sin(angle) * r;
-
-            if (i === 0) {
-              ctx.moveTo(x, y);
-              firstX = x;
-              firstY = y;
-            } else {
-              ctx.lineTo(x, y);
-            }
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
           }
-
-          // ensure smooth closure
-          ctx.lineTo(firstX, firstY);
           ctx.closePath();
           ctx.fillStyle = `${theme.vibrant}22`;
           ctx.strokeStyle = theme.vibrant;
           ctx.lineWidth = 2;
-          ctx.shadowBlur = 20;
-          ctx.shadowColor = theme.vibrant;
           ctx.fill();
           ctx.stroke();
           break;
@@ -118,7 +86,6 @@ export default function VisualizerCanvas({
         case "liquid": {
           ctx.beginPath();
           ctx.moveTo(0, canvas.height);
-
           for (let i = 0; i < bufferLength; i++) {
             const x = (i / bufferLength) * canvas.width;
             const y =
@@ -126,33 +93,21 @@ export default function VisualizerCanvas({
               Math.sin(i * 0.2 + Date.now() / 300) * (dataArray[i] * 0.2);
             ctx.lineTo(x, y);
           }
-
           ctx.lineTo(canvas.width, canvas.height);
           ctx.closePath();
           ctx.fillStyle = `${theme.vibrant}33`;
-          ctx.shadowColor = theme.vibrant;
-          ctx.shadowBlur = 10;
           ctx.fill();
           break;
         }
 
         case "pulsewave": {
-          // Manage global pulses array across frames
           if (!canvas.pulses) canvas.pulses = [];
-
           const now = Date.now();
-
-          // Add new pulse on beat
           if (avg > 30 && (!canvas.lastPulse || now - canvas.lastPulse > 200)) {
-            canvas.pulses.push({
-              time: now,
-              radius: radius,
-              strength: avg,
-            });
+            canvas.pulses.push({ time: now, radius, strength: avg });
             canvas.lastPulse = now;
           }
 
-          // Draw existing pulses
           canvas.pulses = canvas.pulses.filter((p) => {
             const age = now - p.time;
             const r = p.radius + age * 0.05;
@@ -171,26 +126,24 @@ export default function VisualizerCanvas({
         }
 
         case "sparkle": {
-          const sparkleCount = Math.floor(avg / 4); // driven by beat
-
+          const sparkleCount = Math.floor(avg / 4);
           for (let i = 0; i < sparkleCount; i++) {
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height;
-            const radius = Math.random() * (avg / 15 + 1); // size matches energy
-
+            const radius = Math.random() * (avg / 15 + 1);
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, 2 * Math.PI);
             ctx.fillStyle = `${theme.vibrant}${Math.floor(
-              80 + Math.random() * 80
-            ).toString(16)}`; // vibrant with changing alpha
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = theme.vibrant;
+              100 + Math.random() * 80
+            )
+              .toString(16)
+              .padStart(2, "0")}`;
             ctx.fill();
           }
           break;
         }
 
-        case "wave":
+        case "wave": {
           ctx.beginPath();
           for (let i = 0; i < bufferLength; i++) {
             const x = (i / bufferLength) * canvas.width;
@@ -203,33 +156,77 @@ export default function VisualizerCanvas({
           ctx.lineWidth = 2;
           ctx.stroke();
           break;
+        }
 
         case "aura": {
-          const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
           const pulseRadius = radius + avg * 0.5;
-
           ctx.beginPath();
           ctx.arc(centerX, centerY, pulseRadius, 0, 2 * Math.PI);
           ctx.fillStyle = `${theme.vibrant}33`;
-          ctx.shadowColor = theme.vibrant;
-          ctx.shadowBlur = 40;
           ctx.fill();
           break;
         }
 
-        default: {
-          // spectrum
+        case "rings": {
+          const rings = 3;
+          for (let i = 0; i < rings; i++) {
+            const pulse = radius + avg * 0.2 * (i + 1);
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, pulse, 0, 2 * Math.PI);
+            ctx.strokeStyle = `${theme.vibrant}${(50 + i * 30)
+              .toString(16)
+              .padStart(2, "0")}`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+          break;
+        }
+
+        /* case "beatsplash": {
           let x = 0;
           for (let i = 0; i < bufferLength; i++) {
             const value = dataArray[i];
-            const barHeight = value * 0.5;
-            ctx.fillStyle = theme.vibrant || "#e91e63";
-            ctx.fillRect(
-              x,
-              canvas.height - barHeight,
-              barWidth - barGap,
-              barHeight
-            );
+            const h = value * 0.7;
+
+            const r = barWidth / 2;
+            const y = canvas.height - h;
+
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + barWidth, y, x + barWidth, y + h, r);
+            ctx.arcTo(x + barWidth, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + r, y, r);
+            ctx.closePath();
+
+            ctx.fillStyle = theme.vibrant;
+            ctx.fill();
+
+            x += barWidth;
+          }
+          break;
+        } */
+
+        default: {
+          let x = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            const value = dataArray[i];
+            const h = value * 0.7;
+
+            const r = barWidth / 2;
+            const y = canvas.height - h;
+
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + barWidth, y, x + barWidth, y + h, r);
+            ctx.arcTo(x + barWidth, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + r, y, r);
+            ctx.closePath();
+
+            ctx.fillStyle = theme.vibrant;
+            ctx.fill();
+
             x += barWidth;
           }
         }
@@ -255,7 +252,7 @@ export default function VisualizerCanvas({
         height: "100%",
         maxWidth: "100%",
         maxHeight: "100%",
-        aspectRatio: "1 / 1", // 👈 maintains perfect circle ratio
+        aspectRatio: "1 / 1",
         opacity: 0.4,
         mixBlendMode: "screen",
       }}
