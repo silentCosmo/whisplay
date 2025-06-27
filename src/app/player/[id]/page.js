@@ -216,12 +216,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
     setPlaying(!playing);
   };
 
-  //const handleTimeUpdate = () => setCurrentTime(audioRef.currentTime);
-  /* const handleLoadedMetadata = () => {
-    setDuration(audioRef.duration);
-    setLoading(false);
-  }; */
-
   useEffect(() => {
     if (duration > 0) {
       setLoading(false);
@@ -264,7 +258,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
     }
   };
 
-  console.log("Visualizer :", vizMode);
+  //console.log("Visualizer :", vizMode);
 
   return (
     <div
@@ -284,16 +278,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
         >
           Now Playing
         </span> */}
-
-        {/* <div className="w-64 h-64 rounded-3xl overflow-hidden shadow-xl mb-4">
-          <Image
-            src={meta.cover}
-            width={400}
-            height={400}
-            alt={meta.title}
-            className="object-cover w-full h-full"
-          />
-        </div> */}
 
         <div className="relative w-full h-[400px] mb-6 flex items-center justify-center">
           <motion.div
