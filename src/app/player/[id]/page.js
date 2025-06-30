@@ -35,8 +35,6 @@ import Image from "next/image";
 import VisualizerCanvas from "@/lib/visualizerCanvas";
 
 import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
-import { refreshVizMode } from "@/lib/refreshVizMosde";
-import MinimalVisualizer from "@/lib/visualizerCanvas";
 
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
