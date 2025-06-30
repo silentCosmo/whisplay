@@ -31,7 +31,7 @@ export default function PlayerLayout() {
   }, [currentSong]);
 
   return (
-    <div className="min-h-screen flex flex-col sm:flex-row relative">
+    <div className="min-h-[100dvh] flex flex-col sm:flex-row relative">
       <div className="flex-1 relative">
         <header
           className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-5xl px-6 py-3 rounded-full flex justify-between items-center backdrop-blur-md bg-black/30 border border-white/10 shadow-lg"

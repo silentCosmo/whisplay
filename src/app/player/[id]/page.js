@@ -272,7 +272,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
   return (
     <div
-      className="min-h-screen relative flex items-center justify-center md:rounded-3xl"
+      className="min-h-[100dvh] relative flex items-center justify-center md:rounded-3xl"
       style={{ background: backgroundGradient }}
     >
       <div
@@ -289,7 +289,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
           Now Playing
         </span> */}
 
-        <div className="relative w-full h-[400px] mb-6 flex items-center justify-center">
+        <div className="relative w-full md:h-[400px] h-[330px] mb-6 flex items-center justify-center">
           {/* <div className="absolute inset-0 z-50" onClick={(e) => {
               if (e.target.tagName !== "INPUT") setShowCover(!showCover);
             }}>
@@ -431,8 +431,8 @@ export default function PlayerPage({ onTogglePlaylist }) {
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
-                transition={{ duration: 0.5 }}
-                className="absolute -top-10 px-4 py-2 rounded-xl text-sm text-white/50 shadow-lg pointer-events-none"
+                transition={{ duration: 0.3 }}
+                className="absolute -top-10 px-4 py-2 rounded-xl text-sm text-white/50 pointer-events-none"
               >
                 {vizMode}
               </motion.div>
