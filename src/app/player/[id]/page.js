@@ -35,6 +35,8 @@ import Image from "next/image";
 import VisualizerCanvas from "@/lib/visualizerCanvas";
 
 import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
+import { refreshVizMode } from "@/lib/refreshVizMosde";
+import MinimalVisualizer from "@/lib/visualizerCanvas";
 
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
@@ -121,6 +123,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
   });
 
   const [meta, setMeta] = useState({
+    id: "cosmo",
     title: "Loading…",
     artist: "Loading…",
     album: "",
@@ -181,7 +184,16 @@ export default function PlayerPage({ onTogglePlaylist }) {
   useEffect(() => {
     if (!currentSong) return;
 
-    setMeta(currentSong);
+    setMeta({
+      id: currentSong.id, // 🆔 required for key
+      title: currentSong.title,
+      artist: currentSong.artist,
+      album: currentSong.album,
+      cover: currentSong.cover,
+      url: currentSong.url,
+    });
+
+    //refreshVizMode(vizMode, setVizMode, modes);
 
     if (currentSong.theme) {
       const t = currentSong.theme;
@@ -258,7 +270,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
     }
   };
 
-  //console.log("Visualizer :", vizMode);
+  //console.log("Visualizer :", meta.id);
 
   return (
     <div
@@ -280,6 +292,52 @@ export default function PlayerPage({ onTogglePlaylist }) {
         </span> */}
 
         <div className="relative w-full h-[400px] mb-6 flex items-center justify-center">
+          {/* <div className="absolute inset-0 z-50" onClick={(e) => {
+              if (e.target.tagName !== "INPUT") setShowCover(!showCover);
+            }}>
+            <VisualizerCanvas
+                //key={meta.id + vizMode}
+                audioRef={audioRef}
+                audioSrc={meta.id}
+                theme={theme}
+                mode={vizMode}
+                onBeat={(level) => {
+                  const intensity = Math.min(level / 200, 1);
+                  setBeatLevel(intensity);
+                }}
+              />
+          </div> */}
+
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <motion.div
+              className="overflow-hidden rounded-[inherit]"
+              style={{
+                borderRadius: showCover ? 24 : 8,
+              }}
+              animate={{
+                width: showCover ? 256 : 400,
+                height: showCover ? 256 : 400,
+                scale: 1 + beatLevel * 0.06,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 22,
+              }}
+            >
+              <VisualizerCanvas
+                audioRef={audioRef}
+                audioSrc={meta.id}
+                theme={theme}
+                mode={vizMode}
+                onBeat={(level) => {
+                  const intensity = Math.min(level / 200, 1);
+                  setBeatLevel(intensity);
+                }}
+              />
+            </motion.div>
+          </div>
+
           <motion.div
             className="relative overflow-hidden"
             onClick={(e) => {
@@ -328,21 +386,21 @@ export default function PlayerPage({ onTogglePlaylist }) {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Visualizer */}
-            <div className="absolute inset-0 z-20 pointer-events-none">
-              <VisualizerCanvas
-                audioRef={audioRef}
-                theme={theme}
-                mode={vizMode}
-                onBeat={(level) => {
-                  const intensity = Math.min(level / 200, 1);
-                  setBeatLevel(intensity);
-                }}
-              />
-            </div>
           </motion.div>
         </div>
+        {/* <VisualizerCanvas
+          //key={meta.id + vizMode}
+          audioRef={audioRef}
+          audioSrc={meta.id}
+          theme={theme}
+          mode={vizMode}
+          onBeat={(level) => {
+            const intensity = Math.min(level / 200, 1);
+            setBeatLevel(intensity);
+          }}
+        /> */}
+
+        {/* <MinimalVisualizer audioRef={audioRef} theme={theme} /> */}
 
         <div
           className="mt-4 flex gap-3 items-center justify-center text-xs relative"

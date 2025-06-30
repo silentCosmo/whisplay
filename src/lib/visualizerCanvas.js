@@ -9,6 +9,7 @@ export default function VisualizerCanvas({
   onBeat,
 }) {
   const canvasRef = useRef();
+  let prevAnalyser = null;
 
   useEffect(() => {
     if (!audioRef) return;
@@ -16,7 +17,16 @@ export default function VisualizerCanvas({
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
+    if (prevAnalyser) {
+    try {
+      prevAnalyser.disconnect();
+    } catch (e) {}
+  }
+
+
     const analyser = getAnalyser(audioRef);
+
+    prevAnalyser = analyser;
 
     try {
       audioRef._sourceNode.connect(analyser);
