@@ -77,6 +77,25 @@ export async function GET(req) {
             artist = meta.common.artist || artist;
             duration = meta.format.duration || 0;
 
+            // Format & Quality Info
+            const format =
+              meta.format.container?.toUpperCase() ||
+              mimeType?.split("/").pop()?.toUpperCase() ||
+              "Unknown";
+            const bitrate = meta.format.bitrate
+              ? Math.round(meta.format.bitrate / 1000) + "kbps"
+              : null;
+            const sampleRate = meta.format.sampleRate
+              ? (meta.format.sampleRate / 1000).toFixed(1) + "kHz"
+              : null;
+            const bitDepth = meta.format.bitsPerSample
+              ? `${meta.format.bitsPerSample}-bit`
+              : null;
+
+            const qualityText = [format, bitDepth, sampleRate, bitrate]
+              .filter(Boolean)
+              .join(" · ");
+
             const pic = meta.common.picture?.[0];
             if (pic) {
               const imageBuffer = Buffer.from(pic.data);
@@ -121,6 +140,11 @@ export async function GET(req) {
                   cover,
                   duration,
                   theme,
+                  format,
+                  bitrate,
+                  sampleRate,
+                  bitDepth,
+                  qualityText,
                 },
               },
               { upsert: true }
@@ -138,7 +162,9 @@ export async function GET(req) {
         send(`🆕 New/Updated: ${synced}`);
         controller.close();
       } catch (err) {
-        controller.enqueue(encoder.encode(`data: ❌ Failed: ${err.message}\n\n`));
+        controller.enqueue(
+          encoder.encode(`data: ❌ Failed: ${err.message}\n\n`)
+        );
         controller.close();
       }
     },

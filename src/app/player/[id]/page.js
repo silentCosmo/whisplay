@@ -12,16 +12,8 @@ import {
   FaStepBackward,
   FaStepForward,
   FaCompactDisc,
-  FaWaveSquare,
-  FaChartBar,
-  FaSun,
   FaTint,
-  FaFireAlt,
-  FaBolt,
-  FaCogs,
   FaCircleNotch,
-  FaDotCircle,
-  FaStar,
   FaCircle,
 } from "react-icons/fa";
 import { LuAudioWaveform } from "react-icons/lu";
@@ -149,10 +141,11 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
   useEffect(() => {
     if (!currentSong && id) {
+      
       fetch(`/api/meta/${id}`)
         .then((r) => r.json())
-        .then((data) =>
-          setCurrentSong({
+        .then((data) => {
+          const songData = {
             id,
             title: data.title,
             artist: data.artist,
@@ -160,10 +153,23 @@ export default function PlayerPage({ onTogglePlaylist }) {
             cover: data.cover ? `/api/cover/${id}` : "/default.png",
             url: `/api/song?id=${id}`,
             theme: data.theme,
-          })
-        );
+            format: data.format,
+            bitrate: data.bitrate,
+            sampleRate: data.sampleRate,
+            bitDepth: data.bitDepth,
+            qualityText: data.qualityText,
+          };
+
+          setCurrentSong(songData);
+          setMeta(songData);
+        });
     }
   }, [id, currentSong]);
+
+  useEffect(() => {
+  console.log("🧠 currentSong:", currentSong); // check if qualityText is there
+}, [currentSong]);
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -189,6 +195,11 @@ export default function PlayerPage({ onTogglePlaylist }) {
       album: currentSong.album,
       cover: currentSong.cover,
       url: currentSong.url,
+      format: currentSong.format,
+      bitrate: currentSong.bitrate,
+      sampleRate: currentSong.sampleRate,
+      bitDepth: currentSong.bitDepth,
+      qualityText: currentSong.qualityText,
     });
 
     //refreshVizMode(vizMode, setVizMode, modes);
@@ -475,7 +486,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
               style={{
                 color: theme.lightMuted,
                 animation:
-                  meta.artist.length > 25
+                  meta.artist.length > 30
                     ? "scroll-text 10s linear infinite"
                     : "none",
               }}
@@ -562,6 +573,25 @@ export default function PlayerPage({ onTogglePlaylist }) {
             <span>{formatTime(duration)}</span>
           </div>
         </div>
+
+        {meta.qualityText && (
+          <div className="w-full overflow-hidden mt-1">
+            <div className="relative whitespace-nowrap">
+              <div
+                className="text-xs text-center mx-auto w-max font-mono tracking-wide opacity-80"
+                style={{
+                  color: theme.lightMuted,
+                  animation:
+                    meta.qualityText.length > 40
+                      ? "scroll-text 12s linear infinite"
+                      : "none",
+                }}
+              >
+                {meta.qualityText}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex justify-center items-center gap-8 mt-8">

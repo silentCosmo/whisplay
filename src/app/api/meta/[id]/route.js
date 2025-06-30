@@ -23,6 +23,11 @@ export async function GET(req, { params }) {
         title: song.title || null,
         artist: song.artist || null,
         cover: song.cover ?? null,
+        format: song.format || null,
+        bitrate: song.bitrate || null,
+        sampleRate: song.sampleRate || null,
+        bitDepth: song.bitDepth || null,
+        qualityText: song.qualityText || null,
       }),
       {
         headers: {
