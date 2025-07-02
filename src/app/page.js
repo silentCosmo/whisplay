@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { motion } from "motion/react";
 import useSongStore from "@/lib/songStore";
 import { useEffect, useState } from "react";

@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPause, FaPlay, FaForward } from "react-icons/fa";
-import Image from "next/image";
 import useSongStore from "@/lib/songStore";
 import ImageWithFallback from "@/lib/imageWithFallback";
 //import audio from "@/lib/audio";
