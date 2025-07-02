@@ -21,6 +21,7 @@ const useSongStore = create(
       repeat: "all", // "all", "one", "none"
 
       setSongs: (songs) => {
+        console.log("🎯 setSongs called! First song:", songs?.[0]);
         set({
           songs,
           shuffledSongs: [],

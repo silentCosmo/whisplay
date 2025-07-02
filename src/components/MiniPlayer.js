@@ -5,11 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaPause, FaPlay, FaForward } from "react-icons/fa";
 import Image from "next/image";
 import useSongStore from "@/lib/songStore";
+import ImageWithFallback from "@/lib/imageWithFallback";
 //import audio from "@/lib/audio";
 
 export default function MiniPlayer() {
   const router = useRouter();
   const pathname = usePathname();
+  const [isImageError, setIsImageError] = useState(false);
+
+  const handleImageError = () => {
+    setIsImageError(true); // Flag when image fails to load
+  };
   //const { songs, currentSong, setCurrentSong } = useSongStore();
 
   //const [playing, setPlaying] = useState(false);
@@ -76,8 +82,9 @@ export default function MiniPlayer() {
   };
 
   const themeColor = currentSong?.theme?.vibrant || "#e91e63";
-  const shouldShow =
-    currentSong && !pathname.startsWith(`/player`);
+  const shouldShow = currentSong && (!pathname.startsWith("/player") && !pathname.startsWith("/sync"));
+  /* const shouldShow =
+    currentSong && !pathname.startsWith(`/player`); */
     //currentSong && !pathname.startsWith(`/player/${currentSong.id}`);
 
   return (
@@ -88,7 +95,7 @@ export default function MiniPlayer() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
-          className="fixed bottom-14 left-2 right-2 z-50 bg-black/80 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden"
+          className="sticky bottom-14 left-2 right-2 z-50 bg-black/80 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden"
         >
           {/* <audio ref={audioRef} preload="auto" /> */}
           {/* Progress Bar */}
@@ -115,12 +122,13 @@ export default function MiniPlayer() {
             onClick={() => router.push(`/player/${currentSong.id}`)}
           >
             <div className="flex items-center gap-3 w-full">
-              <Image
+              <ImageWithFallback
                 src={currentSong.cover}
                 alt={currentSong.title}
                 width={48}
                 height={48}
                 className="rounded shadow object-cover"
+                //onError={handleImageError}
               />
               <div className="flex-1 overflow-hidden">
                 <p className="text-sm font-semibold text-white truncate">

@@ -28,6 +28,7 @@ export async function GET(req, { params }) {
         sampleRate: song.sampleRate || null,
         bitDepth: song.bitDepth || null,
         qualityText: song.qualityText || null,
+        tags: song.tags || null,
       }),
       {
         headers: {

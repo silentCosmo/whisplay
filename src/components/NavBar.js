@@ -15,7 +15,7 @@ export default function NavBar() {
     return
   }
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-t border-white/10 text-white md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-t border-white/10 text-white">
       <div className="flex justify-around items-center py-2">
         {navItems.map(({ href, label, icon }) => {
           const active = pathname === href;

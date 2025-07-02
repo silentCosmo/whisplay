@@ -3,6 +3,7 @@ import { parseBuffer } from "music-metadata";
 import { connectToDB } from "@/lib/db";
 import { Readable } from "stream";
 import { Vibrant } from "node-vibrant/node";
+import { autoTags } from "@/lib/autoTags";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,17 +46,42 @@ export async function GET(req) {
         let alreadySynced = 0;
         let synced = 0;
 
-        for (const file of files) {
+        for (let index = 0; index < files.length; index++) {
+          const file = files[index];
           const { id: fileId, name: fileName, mimeType } = file;
+
+          const progressInfo = `🎼 Syncing ${index + 1} of ${files.length}: ${fileName}`;
+          send(progressInfo);
 
           const exists = await songsCollection.findOne({ id: fileId });
 
-          // 💡 Skip if already synced AND theme field exists (even if false)
+
+          if (exists && force && exists.cover) {
+            const coverMatch = exists.cover.match(/id=([a-zA-Z0-9_-]+)/);
+            const oldCoverId = coverMatch?.[1];
+            if (oldCoverId) {
+              try {
+                await drive.files.delete({ fileId: oldCoverId });
+                send(`🗑️ Deleted old cover for ${fileName}`);
+              } catch (err) {
+                send(`⚠️ Failed to delete old cover: ${err.message}`);
+              }
+            }
+          }
+
+          // 💡 Skip if not forcing and already has theme
           if (!force && exists && "theme" in exists) {
             alreadySynced++;
             send(`✅ Already synced: ${fileName}`);
             continue;
           }
+
+          // 💡 Skip if already synced AND theme field exists (even if false)
+          /* if (!force && exists && "theme" in exists) {
+            alreadySynced++;
+            send(`✅ Already synced: ${fileName}`);
+            continue;
+          } */
 
           send(`🎧 Processing: ${fileName}`);
 
@@ -71,6 +97,7 @@ export async function GET(req) {
             let cover = null;
             let duration = 0;
             let theme = null;
+
 
             const meta = await parseBuffer(buffer, mimeType);
             title = meta.common.title || title;
@@ -92,12 +119,15 @@ export async function GET(req) {
               ? `${meta.format.bitsPerSample}-bit`
               : null;
 
-            const qualityText = [format, bitDepth, sampleRate, bitrate]
+            const qualityText = [format, /* bitDepth, */ sampleRate, bitrate]
               .filter(Boolean)
               .join(" · ");
 
+            send(`📐 Quality Info: ${qualityText}`);
+
             const pic = meta.common.picture?.[0];
             if (pic) {
+              send(`📤 Uploading cover image...`);
               const imageBuffer = Buffer.from(pic.data);
               const imageStream = Readable.from(imageBuffer);
 
@@ -114,7 +144,9 @@ export async function GET(req) {
               });
 
               cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;
+              send(`✅ Cover uploaded: ${uploaded.id}`);
 
+              send(`🎨 Extracting color palette...`);
               const palette = await Vibrant.from(imageBuffer).getPalette();
               theme = {
                 vibrant: palette.Vibrant?.hex || null,
@@ -124,11 +156,46 @@ export async function GET(req) {
                 darkMuted: palette.DarkMuted?.hex || null,
                 lightMuted: palette.LightMuted?.hex || null,
               };
+              send(`✅ Theme colors extracted`);
             } else {
               // 💡 No cover available – mark it explicitly so we skip later
               theme = false;
-              send(`🎨 No cover found: ${fileName} (theme skipped)`);
+              send(`🎨 No cover found: ${fileName} (theme skipped theme generation)`);
             }
+
+            let lyrics_snippet = null;
+            if (meta.common.lyrics && meta.common.lyrics.length > 0) {
+              console.log("ls", lyrics_snippet);
+
+              lyrics_snippet = meta.common.lyrics[0].slice(0, 150);
+              send(`📝 Lyrics snippet extracted`);
+            }
+
+            let bpm = meta.common.bpm || null;
+            let album = meta.common.album || null;
+            let genre = meta.common.genre?.[0] || null;
+            let year = meta.common.year?.toString() || null;
+            let coverFilename = `${fileId}_cover.jpg`;
+            
+            if(!bpm){
+              send(`📐 BPM Detection Failed!`);
+            }else{
+                send(`📐 BPM Detected: ${bpm} — Tagging mood accordingly...`);
+              }
+            send(`🧠 Generating tags...`);
+            const tags = autoTags({
+              title,
+              artist,
+              album,
+              genre,
+              bpm,
+              year,
+              lyrics_snippet,
+              qualityText,
+              coverFilename,
+            });
+            send(`✅ Tags generated: ${tags.join(", ")}`);
+            send(`💾 Saving to database...`);
 
             await songsCollection.updateOne(
               { id: fileId },
@@ -141,10 +208,13 @@ export async function GET(req) {
                   duration,
                   theme,
                   format,
+                  year,
+                  bpm,
                   bitrate,
                   sampleRate,
                   bitDepth,
                   qualityText,
+                  tags,
                 },
               },
               { upsert: true }

@@ -27,6 +27,7 @@ import Image from "next/image";
 import VisualizerCanvas from "@/lib/visualizerCanvas";
 
 import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
+import ImageWithFallback from "@/lib/imageWithFallback";
 
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
@@ -45,6 +46,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
     progress,
     //setProgress,
     setDuration,
+    songs,
   } = useSongStore();
 
   const modeIcons = {
@@ -167,7 +169,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
   }, [id, currentSong]);
 
   useEffect(() => {
-  console.log("🧠 currentSong:", currentSong); // check if qualityText is there
+  console.log("🧠 songs:", songs); // check if qualityText is there
 }, [currentSong]);
 
 
@@ -378,7 +380,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
                   exit={{ opacity: 0, scale: 1.05 }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                 >
-                  <Image
+                  <ImageWithFallback
                     src={meta.cover}
                     width={400}
                     height={400}

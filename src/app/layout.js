@@ -25,7 +25,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[red]`}
       >
-        <main className="max-w-4xl mx-auto md:p-6">{children}</main>
+        <main className="max-w-4xl mx-auto md:p-6 mb-3">{children}</main>
         <MiniPlayer/>
         <GlobalAudioPlayer/>
         <NavBar/>

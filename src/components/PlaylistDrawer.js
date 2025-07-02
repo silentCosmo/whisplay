@@ -1,5 +1,6 @@
 "use client";
 
+import ImageWithFallback from "@/lib/imageWithFallback";
 import useSongStore from "@/lib/songStore";
 import Image from "next/image";
 import { FaBan, FaInfinity, FaPlay, FaTimes } from "react-icons/fa";
@@ -118,7 +119,7 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
                 color: active ? theme.darkMuted : theme.lightMuted,
               }}
             >
-              <Image
+              <ImageWithFallback
                 src={song.cover}
                 width={50}
                 height={50}
