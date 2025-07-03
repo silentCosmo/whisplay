@@ -3,15 +3,9 @@ import Image from "next/image";
 
 const ImageWithFallback = ({ src, alt, width, height, fallbackSrc, className = "", fill, style }) => {
   const [imageError, setImageError] = useState(false);
-  //const [isFill,setIsFill] = useState({fill})
-  console.log("fall", fallbackSrc);
-  
   const [fallbackImage,setFallbackImage] = useState(!fallbackSrc?"/loading.jpg": fallbackSrc)
-
-  //const fallbackImage = !fallbackSrc?"/loading.jpg": fallbackSrc;
-
   const handleImageError = () => {
-    setImageError(true); // Set error state to true when image fails to load
+    setImageError(true); 
   };
 
   return (
@@ -19,11 +13,14 @@ const ImageWithFallback = ({ src, alt, width, height, fallbackSrc, className = "
       src={imageError ? fallbackImage : src}
       alt={alt}
       width={width}
+      height={height}
+      loading="lazy"
+      placeholder="blur"
+      blurDataURL={imageError ? fallbackImage : src}
       fill={fill}
       style={style}
-      height={height}
       className={className}
-      onError={handleImageError} // Trigger error handler
+      onError={handleImageError}
     />
   );
 };

@@ -1,4 +1,11 @@
+import Whisplay from "@/utils/appName";
+import { Festive } from "next/font/google";
 import { useEffect, useState } from "react";
+
+const festive = Festive({
+  weight: '400',
+  subsets: ["latin"],
+});
 
 export function Header() {
   const [greeting, setGreeting] = useState("");
@@ -13,9 +20,9 @@ export function Header() {
   }, []);
 
   return (
-    <div className="flex justify-between items-center mb-6 sticky top-0 z-50 px-4 py-3 rounded-b-3xl backdrop-blur-m  bg-gradient-to-b from-black to-transparent">
-      <h1 className="text-2xl font-bold text-white/70 tracking-tight">
-        Whisplay
+    <div className="flex justify-between items-center pt-5 px-5 sticky top-0 z-50 rounded-b-3xl backdrop-blur-m bg-gradient-to-b from-black to-transparent">
+      <h1 /* className={`text-2xl font-bold text-white/70 tracking-tight`} */>
+        <Whisplay className={`text-2xl font-extrabold text-white/70 tracking-tight`}/>
       </h1>
       <span className="text-sm md:text-base text-white/60">{greeting}!</span>
       

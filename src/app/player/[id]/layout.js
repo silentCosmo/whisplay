@@ -6,6 +6,7 @@ import PlaylistDrawer from "@/components/PlaylistDrawer";
 import { useRouter } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
 import Link from "next/link";
+import Whisplay from "@/utils/appName";
 
 export default function PlayerLayout() {
   const router = useRouter();
@@ -34,7 +35,8 @@ export default function PlayerLayout() {
     <div className="min-h-[100dvh] flex flex-col sm:flex-row relative">
       <div className="flex-1 relative">
         <header
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-5xl px-6 py-3 rounded-full flex justify-between items-center backdrop-blur-md bg-black/30 border border-white/10 shadow-lg"
+          //className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-5xl px-6 py-3 rounded-full flex justify-between items-center backdrop-blur-md bg-black/30 border border-white/10 shadow-lg"
+          className="absolute top-0 pt-10 left-1/2 transform -translate-x-1/2 z-20 w-[100%] max-w-5xl px-6 py-3 flex justify-between items-center bg-gradient-to-b from-black/30 to-transparent"
           style={{ color: theme.lightMuted }}
         >
           <Link
@@ -53,7 +55,7 @@ export default function PlayerLayout() {
                 letterSpacing: "0.1em",
               }}
             >
-              Whisplay
+              <Whisplay className={"text-2xl font-bold"}/>
             </span>
           </span>
 

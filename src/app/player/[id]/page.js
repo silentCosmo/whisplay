@@ -23,7 +23,6 @@ import { RxBarChart } from "react-icons/rx";
 import { GiBurstBlob } from "react-icons/gi";
 import { RiScan2Line, RiBubbleChartFill } from "react-icons/ri";
 
-import Image from "next/image";
 import VisualizerCanvas from "@/lib/visualizerCanvas";
 
 import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
@@ -60,10 +59,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
     rings: <SiCircle />,
     beatsplash: <RxBarChart />,
   };
-
-  //const [playing, setPlaying] = useState(false);
-  //const [duration, setDuration] = useState(0);
-  //const [currentTime, setCurrentTime] = useState(0);
   const [loading, setLoading] = useState(true);
   const [vizReady, setVizReady] = useState(false);
 
@@ -143,7 +138,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
   useEffect(() => {
     if (!currentSong && id) {
-      
       fetch(`/api/meta/${id}`)
         .then((r) => r.json())
         .then((data) => {
@@ -169,9 +163,8 @@ export default function PlayerPage({ onTogglePlaylist }) {
   }, [id, currentSong]);
 
   useEffect(() => {
-  console.log("🧠 songs:", songs); // check if qualityText is there
-}, [currentSong]);
-
+    console.log("🧠 songs:", songs); // check if qualityText is there
+  }, [currentSong]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -204,8 +197,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
       qualityText: currentSong.qualityText,
     });
 
-    //refreshVizMode(vizMode, setVizMode, modes);
-
     if (currentSong.theme) {
       const t = currentSong.theme;
       setTheme({
@@ -216,7 +207,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
         darkVibrant: t.darkVibrant || "#000",
       });
     } else {
-      // Default theme for fallback/default song
       setTheme({
         vibrant: "#ff4081",
         muted: "#222",
@@ -281,8 +271,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
     }
   };
 
-  //console.log("Visualizer :", meta.id);
-
   return (
     <div
       className="min-h-[100dvh] relative flex items-center justify-center md:rounded-3xl"
@@ -294,46 +282,23 @@ export default function PlayerPage({ onTogglePlaylist }) {
       />
       <div className="absolute inset-0 bg-black/50" />
 
-      <div className="z-10 relative max-w-lg w-full bg-transparent p-6 flex flex-col items-center">
-        {/* <span
-          className="uppercase text-xs font-semibold"
-          style={{ color: theme.lightMuted }}
-        >
-          Now Playing
-        </span> */}
-
+      <div className="z-10 relative max-w-lg w-full bg-transparent flex flex-col items-center">
         <div className="relative w-full md:h-[400px] h-[330px] mb-6 flex items-center justify-center">
-          {/* <div className="absolute inset-0 z-50" onClick={(e) => {
-              if (e.target.tagName !== "INPUT") setShowCover(!showCover);
-            }}>
-            <VisualizerCanvas
-                //key={meta.id + vizMode}
-                audioRef={audioRef}
-                audioSrc={meta.id}
-                theme={theme}
-                mode={vizMode}
-                onBeat={(level) => {
-                  const intensity = Math.min(level / 200, 1);
-                  setBeatLevel(intensity);
-                }}
-              />
-          </div> */}
-
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <motion.div
               className="overflow-hidden rounded-[inherit]"
               style={{
-                borderRadius: showCover ? 24 : 8,
+                borderRadius: showCover ? 24 : 0,
               }}
               animate={{
                 width: showCover ? 256 : 400,
                 height: showCover ? 256 : 400,
-                scale: 1 + beatLevel * 0.06,
+                scale: showCover ? 1 + beatLevel * 0.06 : 1 + beatLevel * 0.0,
               }}
               transition={{
                 type: "spring",
-                stiffness: 200,
-                damping: 22,
+                stiffness: 100,
+                damping: 12,
               }}
             >
               <VisualizerCanvas
@@ -355,7 +320,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
               if (e.target.tagName !== "INPUT") setShowCover(!showCover);
             }}
             style={{
-              borderRadius: showCover ? 24 : 8,
+              borderRadius: showCover ? 24 : 0,
               aspectRatio: "1 / 1",
             }}
             animate={{
@@ -365,8 +330,8 @@ export default function PlayerPage({ onTogglePlaylist }) {
             }}
             transition={{
               type: "spring",
-              stiffness: 200,
-              damping: 22,
+              stiffness: 100,
+              damping: 12,
             }}
           >
             {/* Cover Image Layer */}
@@ -399,19 +364,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
             </AnimatePresence>
           </motion.div>
         </div>
-        {/* <VisualizerCanvas
-          //key={meta.id + vizMode}
-          audioRef={audioRef}
-          audioSrc={meta.id}
-          theme={theme}
-          mode={vizMode}
-          onBeat={(level) => {
-            const intensity = Math.min(level / 200, 1);
-            setBeatLevel(intensity);
-          }}
-        /> */}
-
-        {/* <MinimalVisualizer audioRef={audioRef} theme={theme} /> */}
 
         <div
           className="mt-4 flex gap-3 items-center justify-center text-xs relative"
@@ -453,17 +405,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
           </AnimatePresence>
         </div>
 
-        {/*< div className="relative w-full h-28 mt-4 rounded-xl overflow-hidden shadow-md">
-          <VisualizerCanvas
-            audioRef={audioRef}
-            theme={theme}
-            mode="wave"
-            style={{
-              filter: "drop-shadow(0 0 6px " + theme.vibrant + ")",
-            }}
-          />
-        </div> */}
-
         <div className="w-full overflow-hidden">
           <div className="relative whitespace-nowrap">
             <div
@@ -471,7 +412,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
               style={{
                 color: theme.lightMuted,
                 animation:
-                  meta.title.length > 20
+                  meta.title.length > 30
                     ? "scroll-text 15s linear infinite"
                     : "none",
               }}
@@ -498,207 +439,159 @@ export default function PlayerPage({ onTogglePlaylist }) {
           </div>
         </div>
 
-        {/* Audio */}
-        {/* {meta.url && (
-          <audio
-            onCanPlayThrough={handleCanPlayThrough}
-            key={meta.url}
-            preload="auto"
-            ref={audioRef}
-            src={meta.url}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={() => {
-              if (repeat === "one") {
-                audioRef.currentTime = 0;
-                audioRef.play();
-              } else {
-                setPlaying(false);
-                playNext();
-              }
-            }}
-            autoPlay
-          />
-        )} */}
-
-        {/* Seekbar */}
-        {/* <div className="mt-6 w-full">
-          <input
-            disabled={loading}
-            type="range"
-            min="0"
-            max={duration}
-            value={currentTime}
-            onChange={handleSeek}
-            className="w-full"
-            style={{
-              accentColor: theme.vibrant,
-              backgroundColor: theme.lightMuted,
-              height: "6px",
-              borderRadius: "3px",
-            }}
-          />
-          <div
-            className="flex justify-between text-xs mt-1"
-            style={{ color: theme.lightMuted }}
-          >
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div> */}
-
-        <div className="mt-6 w-full">
-          <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
-            <div
-              className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
-              style={{
-                width: `${progress}%`,
-                backgroundColor: theme.vibrant,
-              }}
-            ></div>
-            <input
-              disabled={loading}
-              type="range"
-              min="0"
-              max={duration}
-              step="0.1"
-              value={currentTime}
-              onChange={handleSeek}
-              className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-            />
-          </div>
-          <div
-            className="flex justify-between text-xs mt-1"
-            style={{ color: theme.lightMuted }}
-          >
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-
-        {meta.qualityText && (
-          <div className="w-full overflow-hidden mt-1">
-            <div className="relative whitespace-nowrap">
+        <section className="w-full  px-6">
+          <div className="mt-6 w-full">
+            <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
               <div
-                className="text-xs text-center mx-auto w-max font-mono tracking-wide opacity-80"
+                className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
                 style={{
-                  color: theme.lightMuted,
-                  animation:
-                    meta.qualityText.length > 40
-                      ? "scroll-text 12s linear infinite"
-                      : "none",
+                  width: `${progress}%`,
+                  backgroundColor: theme.vibrant,
                 }}
+              ></div>
+              <input
+                disabled={loading}
+                type="range"
+                min="0"
+                max={duration}
+                step="0.1"
+                value={currentTime}
+                onChange={handleSeek}
+                className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+              />
+            </div>
+            <div
+              className="flex justify-between text-xs mt-1"
+              style={{ color: theme.lightMuted }}
+            >
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+
+          {meta.qualityText && (
+            <div className="w-full overflow-hidden mt-1">
+              <div className="relative whitespace-nowrap">
+                <div
+                  className="text-xs text-center mx-auto w-max font-mono tracking-wide opacity-80"
+                  style={{
+                    color: theme.lightMuted,
+                    animation:
+                      meta.qualityText.length > 40
+                        ? "scroll-text 12s linear infinite"
+                        : "none",
+                  }}
+                >
+                  {meta.qualityText}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Controls */}
+          <div className="flex justify-center items-center gap-8 mt-8">
+            <button
+              onClick={playPrevious}
+              className="text-2xl hover:scale-110 transition opacity-80"
+              style={{ color: theme.vibrant }}
+            >
+              <FaStepBackward />
+            </button>
+
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              className={`rounded-full shadow-lg ${
+                loading ? "animate-spi p-1" : "p-4"
+              }`}
+              style={{
+                backgroundColor: theme.vibrant,
+                color: theme.darkVibrant,
+                boxShadow: `0 0 20px ${theme.vibrant}80`,
+              }}
+              onClick={togglePlay}
+            >
+              {loading ? (
+                <FaCompactDisc
+                  className="animate-spin"
+                  size={40}
+                  style={{ color: theme.darkVibrant }}
+                />
+              ) : playing ? (
+                <FaPause />
+              ) : (
+                <FaPlay />
+              )}
+            </motion.button>
+
+            <button
+              onClick={playNext}
+              className="text-2xl hover:scale-110 transition opacity-80"
+              style={{ color: theme.vibrant }}
+            >
+              <FaStepForward />
+            </button>
+          </div>
+
+          {/* Volume Control */}
+          <div className="w-full mt-6 px-4">
+            <div className="flex items-center gap-3">
+              <button
+                className="text-lg hover:scale-110 transition"
+                onClick={toggleMute}
+                style={{ color: theme.lightMuted }}
               >
-                {meta.qualityText}
+                {getVolumeIcon()}
+              </button>
+
+              <div
+                className="relative w-10/12 h-3 rounded-full bg-black/2/*  */0 group overflow-hidden cursor-pointer"
+                onMouseEnter={() => setHovering(true)}
+                onMouseLeave={() => setHovering(false)}
+                onTouchStart={() => setHovering(true)}
+                onTouchEnd={() => setHovering(false)}
+              >
+                {/* Filled Volume */}
+                <div
+                  className="absolute top-0 left-0 h-full rounded-full transition-all"
+                  style={{
+                    width: `${(muted ? 0 : volume) * 100}%`,
+                    backgroundColor: theme.vibrant,
+                    boxShadow: `0 0 8px ${theme.vibrant}80`,
+                  }}
+                ></div>
+
+                {/* Range Input (hidden visually, interactive layer) */}
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={muted ? 0 : volume}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setMuted(val === 0);
+                    setVolume(val);
+                  }}
+                  className="absolute top-0 left-0 w-full h-full opacity-0"
+                />
+
+                {/* Tooltip */}
+                {hovering && (
+                  <div
+                    className="absolute -top-8 left-[calc(var(--vol)*100%)] transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-full bg-black/70 shadow-lg pointer-events-none"
+                    style={{
+                      "--vol": muted ? 0 : volume,
+                    }}
+                  >
+                    {Math.round((muted ? 0 : volume) * 100)}%
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )}
-
-        {/* Controls */}
-        <div className="flex justify-center items-center gap-8 mt-8">
-          <button
-            onClick={playPrevious}
-            className="text-2xl hover:scale-110 transition opacity-80"
-            style={{ color: theme.vibrant }}
-          >
-            <FaStepBackward />
-          </button>
-
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            className={`rounded-full shadow-lg ${
-              loading ? "animate-spi p-1" : "p-4"
-            }`}
-            style={{
-              backgroundColor: theme.vibrant,
-              color: theme.darkVibrant,
-              boxShadow: `0 0 20px ${theme.vibrant}80`,
-            }}
-            onClick={togglePlay}
-          >
-            {/* {playing ? <FaPause size={20} /> : <FaPlay size={20} />} */}
-            {loading ? (
-              <FaCompactDisc
-                className="animate-spin"
-                size={32}
-                style={{ color: theme.darkVibrant }}
-              />
-            ) : playing ? (
-              <FaPause />
-            ) : (
-              <FaPlay />
-            )}
-          </motion.button>
-
-          <button
-            onClick={playNext}
-            className="text-2xl hover:scale-110 transition opacity-80"
-            style={{ color: theme.vibrant }}
-          >
-            <FaStepForward />
-          </button>
-        </div>
-
-        {/* Volume Control */}
-        <div className="w-full mt-6 px-4">
-          <div className="flex items-center gap-3">
-            <button
-              className="text-lg hover:scale-110 transition"
-              onClick={toggleMute}
-              style={{ color: theme.lightMuted }}
-            >
-              {getVolumeIcon()}
-            </button>
-
-            <div
-              className="relative w-10/12 h-3 rounded-full bg-black/2/*  */0 group overflow-hidden cursor-pointer"
-              onMouseEnter={() => setHovering(true)}
-              onMouseLeave={() => setHovering(false)}
-              onTouchStart={() => setHovering(true)}
-              onTouchEnd={() => setHovering(false)}
-            >
-              {/* Filled Volume */}
-              <div
-                className="absolute top-0 left-0 h-full rounded-full transition-all"
-                style={{
-                  width: `${(muted ? 0 : volume) * 100}%`,
-                  backgroundColor: theme.vibrant,
-                  boxShadow: `0 0 8px ${theme.vibrant}80`,
-                }}
-              ></div>
-
-              {/* Range Input (hidden visually, interactive layer) */}
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={muted ? 0 : volume}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  setMuted(val === 0);
-                  setVolume(val);
-                }}
-                className="absolute top-0 left-0 w-full h-full opacity-0"
-              />
-
-              {/* Tooltip */}
-              {hovering && (
-                <div
-                  className="absolute -top-8 left-[calc(var(--vol)*100%)] transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-full bg-black/70 shadow-lg pointer-events-none"
-                  style={{
-                    "--vol": muted ? 0 : volume,
-                  }}
-                >
-                  {Math.round((muted ? 0 : volume) * 100)}%
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        </section>
 
         {onTogglePlaylist && (
           <button

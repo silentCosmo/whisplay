@@ -19,12 +19,6 @@ export default function HomePage() {
   const [recent, setRecent] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [topTags, setTopTags] = useState([]);
-
-  const [isImageError, setIsImageError] = useState(false);
-  
-    const handleImageError = () => {
-      setIsImageError(true); // Flag when image fails to load
-    };
   /* const [topPicks, setTopPicks] = useState([]);
   const [feelGood, setFeelGood] = useState([]);
   const [newReleases, setNewReleases] = useState([]); */
