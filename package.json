@@ -13,6 +13,7 @@
     "googleapis": "^150.0.1",
     "howler": "^2.2.4",
     "lodash.debounce": "^4.0.8",
+    "lucide-react": "^0.525.0",
     "mongodb": "^6.17.0",
     "motion": "^12.18.1",
     "music-metadata-browser": "^2.5.11",

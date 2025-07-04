@@ -1,12 +1,16 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaHome, FaMusic, FaUser } from "react-icons/fa";
+import { Home, Search, Library, Settings } from "lucide-react";
+import { FaCog, FaHome, FaMusic, FaSearch, FaUser } from "react-icons/fa";
 
 const navItems = [
-  { href: "/", label: "Home", icon: <FaHome /> },
-  { href: "/library", label: "Library", icon: <FaMusic /> },
+  { href: "/", label: "Home", icon: <Home size={20} /> },
+  { href: "/search", label: "Search", icon: <Search size={20} /> },
+  { href: "/library", label: "Library", icon: <Library size={20} /> },
+  { href: "/settings", label: "Settings", icon: <Settings size={20} /> },
 ];
+
 
 export default function NavBar() {
   const pathname = usePathname();

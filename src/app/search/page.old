@@ -1,0 +1,93 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Search as SearchIcon } from "lucide-react";
+import Image from "next/image";
+import debounce from "lodash.debounce";
+import useSongStore from "@/lib/songStore";
+
+export default function SearchPage() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const { songs, setCurrentSong } = useSongStore();
+  const router = useRouter();
+  const searchRef = useRef(null);
+
+  const debouncedSearch = useRef(
+    debounce((q) => {
+      const qLower = q.toLowerCase();
+      const matches = songs.filter(
+        (s) =>
+          s.title.toLowerCase().includes(qLower) ||
+          s.artist.toLowerCase().includes(qLower) ||
+          s.tags?.some((tag) => tag.toLowerCase().includes(qLower))
+      );
+      setResults(matches);
+    }, 200)
+  ).current;
+
+  useEffect(() => {
+    if (query.trim() === "") {
+      setResults([]);
+    } else {
+      debouncedSearch(query);
+    }
+  }, [query]);
+
+  const handlePlay = (song) => {
+    setCurrentSong(song);
+    router.push(`/player/${song.id}`);
+  };
+
+  return (
+    <div className="p-6">
+      {/* Search Input */}
+      <div className="relative w-full sm:w-96 mx-auto mb-6">
+        <input
+          ref={searchRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search songs, artists, moods..."
+          className="w-full bg-white/10 text-white px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition"
+        />
+        <SearchIcon className="absolute right-3 top-3 text-white/60 w-5 h-5" />
+      </div>
+
+      {/* Results */}
+      {results.length === 0 && query !== "" ? (
+        <div className="text-center text-white/60 mt-12">
+          <p className="text-lg">No results found 😔</p>
+          <p className="text-sm">Try another keyword or spelling.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-5">
+          {results.map((song) => (
+            <div
+              key={song.id}
+              onClick={() => handlePlay(song)}
+              className="group cursor-pointer bg-white/5 backdrop-blur-lg rounded-xl overflow-hidden shadow-md hover:scale-105 transition transform duration-300"
+            >
+              <div className="relative h-40 w-full">
+                <Image
+                  src={song.cover || "/default.png"}
+                  fill
+                  alt={song.title}
+                  className="object-cover transition-opacity duration-300 group-hover:opacity-80"
+                />
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition" />
+              </div>
+              <div className="p-3">
+                <h3 className="text-white font-semibold truncate">
+                  {song.title}
+                </h3>
+                <p className="text-sm text-white/70 truncate">{song.artist}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

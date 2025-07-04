@@ -75,43 +75,53 @@
 const tagSets = [
   {
     tags: ["chill", "focus", "night"],
-    match: /lofi|chill|relax|ambient|study|focus|downtempo|dreamy|mellow|background|vibes|smoke|zone|cloudy|float|lo-fi|meditate|hazy|zen|rain|cozy|soothe/i,
+    match:
+      /lofi|chill|relax|ambient|study|focus|downtempo|dreamy|mellow|background|vibes|smoke|zone|cloudy|float|lo-fi|meditate|hazy|zen|rain|cozy|soothe/i,
   },
   {
     tags: ["party", "dance", "energetic"],
-    match: /edm|club|dance|remix|beat|trance|festival|trap|party|dj|electro|house|techno|bounce|drop|dubstep|rave|bass|twerk|clubmix|booty|banger|pump/i,
+    match:
+      /edm|club|dance|remix|beat|trance|festival|trap|party|dj|electro|house|techno|bounce|drop|dubstep|rave|bass|twerk|clubmix|booty|banger|pump/i,
   },
   {
     tags: ["sad", "emotional", "moody"],
-    match: /sad|sadness|cry|melancholy|emotional|lonely|broken|hurt|heart|alone|tears|sorrow|blue|depress|pain|aching|grief|goodbye|loss|empty|rainy/i,
+    match:
+      /sad|sadness|cry|melancholy|emotional|lonely|broken|hurt|heart|alone|tears|sorrow|blue|depress|pain|aching|grief|goodbye|loss|empty|rainy/i,
   },
   {
     tags: ["romantic", "love", "intimate"],
-    match: /romantic|love|kiss|darling|sweetheart|honeymoon|affection|desire|tender|crush|lover|heartfelt|passion|valentine|slow dance|chemistry|date night|flirt|sensual/i,
+    match:
+      /romantic|love|kiss|darling|sweetheart|honeymoon|affection|desire|tender|crush|lover|heartfelt|passion|valentine|slow dance|chemistry|date night|flirt|sensual/i,
   },
   {
     tags: ["sleep", "calm", "soft"],
-    match: /soft|sleep|soothing|slow|peace|calm|harmony|drift|quiet|lullaby|serene|breeze|light|tranquil|pillow|ambient|gentle|nap|zen/i,
+    match:
+      /soft|sleep|soothing|slow|peace|calm|harmony|drift|quiet|lullaby|serene|breeze|light|tranquil|pillow|ambient|gentle|nap|zen/i,
   },
   {
     tags: ["instrumental", "classical", "piano"],
-    match: /instrumental|orchestra|piano|violin|cello|symphony|no lyrics|flute|concerto|harp|strings|score|solo piano|classical|chamber|sonata/i,
+    match:
+      /instrumental|orchestra|piano|violin|cello|symphony|no lyrics|flute|concerto|harp|strings|score|solo piano|classical|chamber|sonata/i,
   },
   {
     tags: ["rock", "guitar", "band"],
-    match: /rock|guitar|band|metal|punk|drums|solo|alt rock|garage|grunge|indie rock|riff|heavy|mosh|emo|hardcore|thrash|headbang|live set/i,
+    match:
+      /rock|guitar|band|metal|punk|drums|solo|alt rock|garage|grunge|indie rock|riff|heavy|mosh|emo|hardcore|thrash|headbang|live set/i,
   },
   {
     tags: ["retro", "80s", "vintage"],
-    match: /80s|synth|retro|vintage|nostalgia|cassette|boombox|disco|funk|classic pop|mixtape|roller|neon|analog|vcr|walkman|grainy|throwback|oldschool/i,
+    match:
+      /80s|synth|retro|vintage|nostalgia|cassette|boombox|disco|funk|classic pop|mixtape|roller|neon|analog|vcr|walkman|grainy|throwback|oldschool/i,
   },
   {
     tags: ["indie", "folk", "acoustic"],
-    match: /indie|folk|acoustic|singer-songwriter|campfire|raw|organic|strum|coffeehouse|bedroom pop|banjo|lo-fi acoustic|guitar solo|honest|earthy|rustic|stripped/i,
+    match:
+      /indie|folk|acoustic|singer-songwriter|campfire|raw|organic|strum|coffeehouse|bedroom pop|banjo|lo-fi acoustic|guitar solo|honest|earthy|rustic|stripped/i,
   },
   {
     tags: ["motivational", "uplifting", "workout"],
-    match: /motivation|power|hustle|run|lift|workout|grind|anthem|focus|beast mode|go hard|champion|goal|rise|push|no limits|training|energy boost|fight/i,
+    match:
+      /motivation|power|hustle|run|lift|workout|grind|anthem|focus|beast mode|go hard|champion|goal|rise|push|no limits|training|energy boost|fight/i,
   },
 ];
 
@@ -160,6 +170,44 @@ export function autoTags(song) {
     else if (y >= 1980) tags.add("80s");
     else if (y > 1900) tags.add("classic");
   }
+
+  // Add tag for music key
+  const key = (song.key || song.meta?.key || "").trim().toUpperCase();
+  if (key) {
+    // Normalize and tag base note (remove ♯/♭ for simplicity)
+    const baseKey = key.match(/[A-G]/)?.[0];
+    if (baseKey) {
+      tags.add(baseKey); // Add as a tag like "A", "C", etc.
+    }
+
+    // Optional: full key tag like "A Major" or "C♯ minor"
+    tags.add(key);
+
+    // Optional: map emotional moods based on key signature (simplified theory-based mapping)
+    const majorKeys = ["C", "D", "E", "F", "G", "A", "B"];
+    const minorKeys = ["A", "B", "C♯", "D", "E", "F♯", "G♯"];
+
+    if (/major/i.test(key)) tags.add("uplifting");
+    else if (/minor/i.test(key)) tags.add("emotional");
+
+    const keyMoodMap = {
+      C: "innocent",
+      "C♯": "determined",
+      D: "triumphant",
+      "E♭": "melancholy",
+      E: "hopeful",
+      F: "peaceful",
+      "F♯": "mystical",
+      G: "majestic",
+      A: "emotional",
+      "B♭": "warm",
+      B: "dramatic",
+    };
+  
+    if (keyMoodMap[baseKey]) tags.add(keyMoodMap[baseKey]);
+
+  }
+
 
   // No "misc" if any tag exists
   if (tags.size === 0) tags.add("explore");

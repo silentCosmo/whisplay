@@ -273,7 +273,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
   return (
     <div
-      className="min-h-[100dvh] relative flex items-center justify-center md:rounded-3xl"
+      className="min-h-[100dvh] overflow-hidden relative flex items-center justify-center md:rounded-3xl"
       style={{ background: backgroundGradient }}
     >
       <div

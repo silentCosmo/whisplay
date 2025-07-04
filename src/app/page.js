@@ -11,6 +11,52 @@ import HorizontalCardScroll from "@/components/home/HorizontalCardScroll";
 import GridCard from "@/components/home/GridCard";
 import ImageWithFallback from "@/lib/imageWithFallback";
 
+const moods = [
+  { title: "Chill & Night", tags: ["chill", "focus", "night"] },
+  { title: "Party Boost", tags: ["party", "dance", "energetic"] },
+  { title: "Emotional & Sad", tags: ["sad", "emotional", "moody"] },
+  { title: "Romantic", tags: ["romantic", "love", "intimate"] },
+  { title: "Sleep & Calm", tags: ["sleep", "calm", "soft"] },
+  { title: "Instrumental", tags: ["instrumental", "classical", "piano"] },
+  { title: "Rock & Guitar", tags: ["rock", "guitar", "band"] },
+  { title: "Retro Vibes", tags: ["retro", "80s", "vintage"] },
+  { title: "Indie & Acoustic", tags: ["indie", "folk", "acoustic"] },
+  {
+    title: "Motivation & Workout",
+    tags: ["motivational", "uplifting", "workout"],
+  },
+];
+
+const tempoSections = [
+  { title: "Slow & Lofi", tags: ["lofi"] },
+  { title: "Mid-tempo Groove", tags: ["groove"] },
+  { title: "Mainstream Pop", tags: ["pop"] },
+  { title: "Workout Boost", tags: ["workout"] },
+  { title: "Hardcore Tempo", tags: ["hardcore"] },
+];
+
+// 📅 Era-based tags
+const eraSections = [
+  { title: "Fresh Hits (2020s)", tags: ["fresh"] },
+  { title: "2010s Flashback", tags: ["2010s"] },
+  { title: "2000s Classics", tags: ["2000s"] },
+  { title: "90s Gold", tags: ["90s"] },
+  { title: "Retro 80s", tags: ["80s"] },
+  { title: "Timeless Classics", tags: ["classic"] },
+];
+
+const keySections = [
+  { title: "Key of C", tags: ["key-c"] },
+  { title: "Key of D", tags: ["key-d"] },
+  { title: "Key of E", tags: ["key-e"] },
+  { title: "Key of F", tags: ["key-f"] },
+  { title: "Key of G", tags: ["key-g"] },
+  { title: "Key of A", tags: ["key-a"] },
+  { title: "Key of B", tags: ["key-b"] },
+  { title: "Sharp & Flat Keys", tags: ["key-g♯", "key-a♭", "key-f♯", "key-d♯", "key-e♭"] },
+];
+
+
 export default function HomePage() {
   const router = useRouter();
   useInitSongs();
@@ -19,9 +65,6 @@ export default function HomePage() {
   const [recent, setRecent] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [topTags, setTopTags] = useState([]);
-  /* const [topPicks, setTopPicks] = useState([]);
-  const [feelGood, setFeelGood] = useState([]);
-  const [newReleases, setNewReleases] = useState([]); */
   const getByTags = (tagList) =>
     songs.filter((s) => s.tags?.some((t) => tagList.includes(t)));
 
@@ -57,25 +100,26 @@ export default function HomePage() {
 
     setTopTags(sorted.map(([tag]) => tag));
 
-    /* const top = [...songs]
-      .filter((s) => s.plays)
-      .sort((a, b) => b.plays - a.plays)
-      .slice(0, 6);
-
-    const feel = songs
-      .filter((s) => s.genre === "chill" || s.tags?.includes("vibes"))
-      .slice(0, 6);
-
-    const newRelease = [...songs]
-      .filter((s) => s.releaseDate)
-      .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
-      .slice(0, 6); */
-
-    //setTopPicks(top);
-    //setFeelGood(feel);
-    //setNewReleases(newRelease);
   }, [songs]);
 
+  const usedIds = new Set();
+
+  const getUniqueByTags = (tagList, limit = 8) => {
+    const filtered = [];
+    for (const song of songs) {
+      if (
+        song.tags?.some((t) => tagList.includes(t)) &&
+        !usedIds.has(song.id)
+      ) {
+        filtered.push(song);
+        usedIds.add(song.id);
+        if (filtered.length === limit) break;
+      }
+    }
+    return filtered;
+  };
+
+  const suggestions = songs.filter((s) => !usedIds.has(s.id)).slice(0, 6);
   const handleClick = (song) => {
     setCurrentSong(song);
     router.push(`/player/${song.id}`);
@@ -118,73 +162,30 @@ export default function HomePage() {
           <HorizontalCardScroll items={recent} onClick={handleClick} />
         </Section>
 
+        {suggestions.length > 0 && (
+          <Section title="🎁 Just For You">
+            <GridCard items={suggestions} onClick={handleClick} />
+          </Section>
+        )}
+
         <Section title="Lofi Chill">
           <HorizontalCardScroll
-            items={getByTags(["lofi", "chill", "mellow", "dreamy"])}
+            items={getUniqueByTags(["lofi", "chill", "mellow", "dreamy"])}
             onClick={handleClick}
           />
         </Section>
 
-        {topTags
-          .filter((tag) => !["lofi", "chill", "mellow", "dreamy"].includes(tag)) // skip lofi
-          .map((tag) => (
-            <Section key={tag} title={tag[0].toUpperCase() + tag.slice(1)}>
-              <GridCard items={getByTags([tag])} onClick={handleClick} />
+        {[...moods, ...tempoSections, ...eraSections, ...keySections].map(({ title, tags }) => {
+          const items = songs.filter((s) =>
+            s.tags?.some((t) => tags.includes(t))
+          );
+          if (items.length === 0) return null;
+          return (
+            <Section key={title} title={title}>
+              <GridCard items={items.slice(0, 8)} onClick={handleClick} />
             </Section>
-          ))}
-
-        <Section title="Morning">
-          <GridCard
-            items={getByTags(["soft", "acoustic", "calm"])}
-            onClick={handleClick}
-          />
-        </Section>
-
-{/*         <Section title="Pop">
-          <GridCard
-            items={getByTags(["pop", "acoustic"])}
-            onClick={handleClick}
-          />
-        </Section>
-
-        <Section title="Moody">
-          <GridCard
-            items={getByTags(["moody", "emotional", "sad"])}
-            onClick={handleClick}
-          />
-        </Section>
-
-        <Section title="Energy Boost">
-          <GridCard
-            items={getByTags(["uplifting", "motivational", "workout"])}
-            onClick={handleClick}
-          />
-        </Section>
-
-        <Section title="Night Lights">
-          <GridCard
-            items={getByTags(["dreamy", "mellow", "lofi"])}
-            onClick={handleClick}
-          />
-        </Section>
-
-        <Section title="Romantic Vibes">
-          <GridCard
-            items={getByTags(["romantic", "love"])}
-            onClick={handleClick}
-          />
-        </Section>
-
-        <Section title="Retro Rewind">
-          <HorizontalCardScroll
-            items={getByTags(["80s", "retro"])}
-            onClick={handleClick}
-          />
-        </Section> */}
-
-        {/* <Section title="Recently Played">
-          <GridCard items={recent} onClick={handleClick} />
-        </Section> */}
+          );
+        })}
       </div>
     </div>
   );

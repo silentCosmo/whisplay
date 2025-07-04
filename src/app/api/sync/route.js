@@ -172,6 +172,7 @@ export async function GET(req) {
             }
 
             let bpm = meta.common.bpm || null;
+            let key = meta.common.key || null;
             let album = meta.common.album || null;
             let genre = meta.common.genre?.[0] || null;
             let year = meta.common.year?.toString() || null;
@@ -189,6 +190,7 @@ export async function GET(req) {
               album,
               genre,
               bpm,
+              key,
               year,
               lyrics_snippet,
               qualityText,
@@ -204,11 +206,13 @@ export async function GET(req) {
                   id: fileId,
                   title,
                   artist,
+                  album,
                   cover,
                   duration,
                   theme,
                   format,
                   year,
+                  key,
                   bpm,
                   bitrate,
                   sampleRate,
