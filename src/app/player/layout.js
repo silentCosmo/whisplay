@@ -7,10 +7,11 @@ import { useRouter } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
 import Link from "next/link";
 import Whisplay from "@/utils/appName";
+import { togglePlayPause } from "@/lib/audioPlayer";
 
 export default function PlayerLayout() {
   const router = useRouter();
-  const { currentSong } = useSongStore();
+  const { currentSong, setPlaying, playNext, playPrevious } = useSongStore();
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [theme, setTheme] = useState({
     vibrant: "#e91e63",
@@ -27,6 +28,31 @@ export default function PlayerLayout() {
         muted: t.muted || "#222",
         darkMuted: t.darkMuted || "#111",
         lightMuted: t.lightMuted || "#ccc",
+      });
+    }
+  }, [currentSong]);
+
+  useEffect(() => {
+    if ("mediaSession" in navigator && currentSong) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSong.title,
+        artist: currentSong.artist,
+        album: currentSong.album || "",
+        artwork: [
+          { src: currentSong.cover, sizes: "512x512", type: "image/jpeg" },
+        ],
+      });
+      navigator.mediaSession.setActionHandler("play", () => {
+        setPlaying(true);
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        setPlaying(false);
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        playNext();
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        playPrevious();
       });
     }
   }, [currentSong]);
@@ -55,7 +81,7 @@ export default function PlayerLayout() {
                 letterSpacing: "0.1em",
               }}
             >
-              <Whisplay className={"text-2xl font-bold"}/>
+              <Whisplay className={"text-2xl font-bold"} />
             </span>
           </span>
 
