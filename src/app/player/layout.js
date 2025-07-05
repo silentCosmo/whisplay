@@ -11,7 +11,7 @@ import { togglePlayPause } from "@/lib/audioPlayer";
 
 export default function PlayerLayout() {
   const router = useRouter();
-  const { currentSong, setPlaying, playNext, playPrevious } = useSongStore();
+  const { currentSong, currentTime, duration, playing, setPlaying, playNext, playPrevious } = useSongStore();
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [theme, setTheme] = useState({
     vibrant: "#e91e63",
@@ -33,29 +33,47 @@ export default function PlayerLayout() {
   }, [currentSong]);
 
   useEffect(() => {
-    if ("mediaSession" in navigator && currentSong) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentSong.title,
-        artist: currentSong.artist,
-        album: currentSong.album || "",
-        artwork: [
-          { src: currentSong.cover, sizes: "512x512", type: "image/jpeg" },
-        ],
-      });
-      navigator.mediaSession.setActionHandler("play", () => {
-        setPlaying(true);
-      });
-      navigator.mediaSession.setActionHandler("pause", () => {
-        setPlaying(false);
-      });
-      navigator.mediaSession.setActionHandler("nexttrack", () => {
-        playNext();
-      });
-      navigator.mediaSession.setActionHandler("previoustrack", () => {
-        playPrevious();
-      });
+  if ("mediaSession" in navigator && currentSong && duration) {
+    // Set initial metadata with artwork and so on (like before)
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentSong.title,
+      artist: currentSong.artist,
+      album: currentSong.album || "",
+      artwork: [
+        { src: currentSong.cover, sizes: "512x512", type: "image/jpeg" },
+        // add more sizes as needed
+      ],
+    });
+
+    // Action handlers (play, pause, next, prev, disable seek buttons)
+    navigator.mediaSession.setActionHandler("play", () => setPlaying(true));
+    navigator.mediaSession.setActionHandler("pause", () => setPlaying(false));
+    navigator.mediaSession.setActionHandler("nexttrack", () => playNext());
+    navigator.mediaSession.setActionHandler("previoustrack", () => playPrevious());
+    navigator.mediaSession.setActionHandler("seekbackward", null);
+    navigator.mediaSession.setActionHandler("seekforward", null);
+    navigator.mediaSession.setActionHandler("seekto", null);
+
+    // Update position state (call repeatedly during playback)
+    function updatePosition() {
+      if ("setPositionState" in navigator.mediaSession) {
+        navigator.mediaSession.setPositionState({
+          duration: duration,          // total length in seconds
+          playbackRate: playing ? 1 : 0,
+          position: currentTime,       // current playback position in seconds
+        });
+      }
     }
-  }, [currentSong]);
+
+    // Update immediately and then start interval updates every second
+    updatePosition();
+    const interval = setInterval(updatePosition, 1000);
+
+    // Cleanup interval on unmount or dependency change
+    return () => clearInterval(interval);
+  }
+}, [currentSong, currentTime, duration, playing]);
+
 
   return (
     <div className="min-h-[100dvh] flex flex-col sm:flex-row relative">
