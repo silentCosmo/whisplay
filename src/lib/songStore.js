@@ -192,6 +192,11 @@ generateSmartAutoplay: () => {
           return;
         }
 
+        if (typeof document !== "undefined") {
+  document.cookie = `last-played-song=${song.id}; path=/`;
+}
+
+
         set({ currentSong: song, currentIndex: index });
       },
 
@@ -326,6 +331,7 @@ generateSmartAutoplay: () => {
         repeat: state.repeat,
         playing: state.playing,
         volume: state.volume,
+        songs: state.songs,
       }),
     }
   )

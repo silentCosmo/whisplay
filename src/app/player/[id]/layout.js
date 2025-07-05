@@ -1,86 +1,83 @@
-"use client";
-import { useEffect, useState } from "react";
-import useSongStore from "@/lib/songStore";
-import PlayerPage from "./page";
-import PlaylistDrawer from "@/components/PlaylistDrawer";
-import { useRouter } from "next/navigation";
-import { FaArrowLeft } from "react-icons/fa";
-import Link from "next/link";
-import Whisplay from "@/utils/appName";
+// app/player/layout.js
 
-export default function PlayerLayout() {
-  const router = useRouter();
-  const { currentSong } = useSongStore();
-  const [showPlaylist, setShowPlaylist] = useState(false);
-  const [theme, setTheme] = useState({
-    vibrant: "#e91e63",
-    muted: "#222",
-    darkMuted: "#111",
-    lightMuted: "#ccc",
-  });
+/* export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const lastPlayedId = await cookieStore.get("last-played-song")?.value;
 
-  useEffect(() => {
-    if (currentSong?.theme) {
-      const t = currentSong.theme;
-      setTheme({
-        vibrant: t.vibrant || "#e91e63",
-        muted: t.muted || "#222",
-        darkMuted: t.darkMuted || "#111",
-        lightMuted: t.lightMuted || "#ccc",
-      });
-    }
-  }, [currentSong]);
+  if (!lastPlayedId) {
+    return {
+      title: "Now Playing | Whisplay",
+      description: "Listen to your favorite tracks with style.",
+    };
+  }
 
-  return (
-    <div className="min-h-[100dvh] flex flex-col sm:flex-row relative">
-      <div className="flex-1 relative">
-        <header
-          //className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-5xl px-6 py-3 rounded-full flex justify-between items-center backdrop-blur-md bg-black/30 border border-white/10 shadow-lg"
-          className="absolute top-0 pt-10 left-1/2 transform -translate-x-1/2 z-20 w-[100%] max-w-5xl px-6 py-3 flex justify-between items-center bg-gradient-to-b from-black/30 to-transparent"
-          style={{ color: theme.lightMuted }}
-        >
-          <Link
-            href="/"
-            prefetch
-            className="flex items-center gap-1 text-sm hover:text-white transition font-medium"
-          >
-            <FaArrowLeft />
-          </Link>
+  try {
+    const song = await fetchSongById(lastPlayedId);
+    console.log("lpid",lastPlayedId);
+    
+    if (!song) throw new Error("Song not found");
 
-          <span className="tracking-wide text-sm sm:text-base font-semibold text-white/80">
-            <span
-              style={{
-                color: theme.vibrant,
-                fontWeight: 800,
-                letterSpacing: "0.1em",
-              }}
-            >
-              <Whisplay className={"text-2xl font-bold"}/>
-            </span>
-          </span>
+    return {
+      title: `${song.title} · ${song.artist} | Whisplay`,
+      description: `Now playing: ${song.title} by ${song.artist}`,
+      openGraph: {
+        title: song.title,
+        description: song.artist,
+        images: [song.cover],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: song.title,
+        description: song.artist,
+        images: [song.cover],
+      },
+    };
+  } catch (error) {
+    console.warn("Error fetching song for metadata:", error);
+    return {
+      title: "Now Playing | Whisplay",
+      description: "Enjoy the rhythm of Whisplay.",
+    };
+  }
+} */
 
-          <div className="text-xs opacity-60">v1.0</div>
-        </header>
-        <PlayerPage onTogglePlaylist={() => setShowPlaylist((prev) => !prev)} />
-      </div>
+export async function generateMetadata({ params }) {
+  const { id: lastPlayedId } = await params; // <-- await here!
 
-      {/* Desktop Sidebar */}
-      <div className="hidden sm:block w-[360px] border-l border-black/30 bg-black/20">
-        <PlaylistDrawer theme={theme} />
-      </div>
+  console.log("lpid", lastPlayedId);
 
-      {/* Mobile Slide-up Drawer */}
-      <div
-        className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 sm:hidden ${
-          showPlaylist ? "translate-y-0" : "translate-y-full"
-        }`}
-      >
-        <PlaylistDrawer
-          theme={theme}
-          onClose={() => setShowPlaylist(false)}
-          isMobile
-        />
-      </div>
-    </div>
-  );
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/meta/${lastPlayedId}`);
+  
+  if (!res.ok) {
+    console.error("Error fetching song for metadata:", res.status);
+    return {
+      title: "Whisplay – Listen in FLAC, High-Res & Pure Audio",
+      description: "Explore the magic of music. Powered by Whisplay.",
+    };
+  }
+  
+  const song = await res.json();
+  console.log("resM",song);
+  
+
+  return {
+    title: `${song.title} · ${song.artist} | Whisplay`,
+    description: `${song.qualityText} — Enjoy the beauty of ${song.title} by ${song.artist} on Whisplay.`,
+    openGraph: {
+      images: [
+        {
+          url: song.cover,
+          width: 1200,
+          height: 630,
+          alt: song.title,
+        },
+      ],
+    },
+  };
+}
+
+
+
+export default function PlayerLayout({ children }) {
+  return <>{children}</>;
 }
