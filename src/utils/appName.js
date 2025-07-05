@@ -11,7 +11,6 @@ const test = Henny_Penny({
 });
 
 function Whisplay({className}) {
-    console.log(className);
     
   return (
     <span className={`${test.className} ${className || ''}`}>Whisplay</span>

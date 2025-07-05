@@ -63,7 +63,7 @@ export default function Library() {
   ];
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-8 min-h-[85dvh]">
       <h2 className="text-xl font-semibold text-white mb-6">Your Library</h2>
 
       {/* Doors Grid */}

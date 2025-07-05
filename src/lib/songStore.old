@@ -20,16 +20,8 @@ const useSongStore = create(
       shuffle: false,
       repeat: "all", // "all", "one", "none"
 
-      // Setters
-      /* setSongs: (songs) => {
-        const shuffle = get().shuffle;
-        set({
-          songs,
-          shuffledSongs: shuffle ? shuffleArray(songs) : [],
-        });
-      }, */
-
       setSongs: (songs) => {
+        console.log("🎯 setSongs called! First song:", songs?.[0]);
         set({
           songs,
           shuffledSongs: [],
@@ -84,39 +76,10 @@ const useSongStore = create(
 
       getShuffledSongs: () => get().shuffledSongs,
 
-      /* playNext: () => {
-        const {
-          songs,
-          currentIndex,
-          shuffle,
-          repeat,
-          setCurrentSong,
-          currentSong,
-        } = get();
-
-        const list = shuffle ? shuffledSongs : songs;
-
-        if (repeat === "one") {
-          setCurrentSong(currentSong);
-          return;
-        }
-
-        let nextIndex = currentIndex + 1;
-
-        if (nextIndex >= list.length) {
-          if (repeat === "all") {
-            nextIndex = 0;
-          } else {
-            return; // no repeat
-          }
-        }
-
-        set({ currentIndex: nextIndex, currentSong: list[nextIndex] });
-      }, */
-
       playNext: () => {
         const {
           songs,
+          shuffledSongs,
           currentIndex,
           shuffle,
           repeat,
@@ -124,34 +87,54 @@ const useSongStore = create(
           currentSong,
         } = get();
 
-        // Only repeat the same song when it ends naturally
-        // Not when user presses "Next"
+        // If shuffle is enabled, use the shuffledSongs list and play the next song in order
         if (shuffle) {
-          const randomIndex = Math.floor(Math.random() * songs.length);
-          setCurrentSong(songs[randomIndex]);
-          return;
-        }
+          let nextIndex = currentIndex + 1;
 
-        let nextIndex = currentIndex + 1;
-
-        if (nextIndex >= songs.length) {
-          if (repeat === "all") {
-            nextIndex = 0;
-          } else {
-            return; // no repeat, stop at end
+          // If we reached the end of the shuffled list, handle repeat or stop
+          if (nextIndex >= shuffledSongs.length) {
+            if (repeat === "all") {
+              nextIndex = 0;
+            } else {
+              return; // No repeat, stop at end
+            }
           }
+
+          const nextSong = shuffledSongs[nextIndex];
+          set({ currentIndex: nextIndex, currentSong: nextSong });
+          setCurrentSong(nextSong);
+          set({
+            currentTime: 0,
+            progress: 0,
+            duration: 0,
+          });
+        } else {
+          // If shuffle is not enabled, follow the regular order from the songs list
+          let nextIndex = currentIndex + 1;
+
+          if (nextIndex >= songs.length) {
+            if (repeat === "all") {
+              nextIndex = 0;
+            } else {
+              return; // No repeat, stop at end
+            }
+          }
+
+          const nextSong = songs[nextIndex];
+
+          // Prewarm the next song for better performance
+          fetch(`/api/song?id=${nextSong.id}`, { method: "HEAD" }).catch(
+            (err) => console.warn("Prewarm failed:", err)
+          );
+
+          set({ currentIndex: nextIndex, currentSong: nextSong });
+          setCurrentSong(nextSong);
+          set({
+            currentTime: 0,
+            progress: 0,
+            duration: 0,
+          });
         }
-
-        const nextSong = songs[nextIndex];
-
-        // Prewarm next audio stream
-        fetch(`/api/song?id=${nextSong.id}`, { method: "HEAD" }).catch((err) =>
-          console.warn("Prewarm failed:", err)
-        );
-
-        set({ currentIndex: nextIndex, currentSong: nextSong });
-
-        setCurrentSong(songs[nextIndex]);
       },
 
       playPrevious: () => {
@@ -166,10 +149,76 @@ const useSongStore = create(
         }
 
         set({ currentIndex: prevIndex, currentSong: list[prevIndex] });
+        set({
+          currentTime: 0,
+          progress: 0,
+          duration: 0,
+        });
+      },
+
+      /* audioElement: null,
+      setAudioElement: (el) => set({ audioElement: el }), */
+
+      setPlaying: (isPlaying) => set({ playing: isPlaying }),
+
+      audioRef: null,
+      //setAudioRef: (ref) => set({ audioRef: ref }),
+      setAudioRef: (ref) => {
+        const volume = get().volume;
+        console.log("🧪 Setting audioRef with volume:", volume);
+        if (ref) ref.volume = volume;
+        set({ audioRef: ref });
+      },
+
+      duration: 0,
+      setDuration: (val) => set({ duration: val }),
+
+      playing: false,
+      setPlaying: (val) => set({ playing: val }),
+
+      progress: 0,
+      setProgress: (val) => set({ progress: val }),
+
+      volume: 1,
+      setVolume: (val) => {
+        const ref = get().audioRef;
+        if (ref) ref.volume = val;
+        set({ volume: val });
+      },
+
+      currentTime: 0,
+      setCurrentTime: (t) => set({ currentTime: t }),
+
+      togglePlay: () => {
+        const { audioRef, playing, setPlaying } = get();
+        if (!audioRef) return;
+        if (playing) {
+          audioRef.pause();
+          setPlaying(false);
+        } else {
+          audioRef.play();
+          setPlaying(true);
+        }
+      },
+
+      seekTo: (time) => {
+        const { audioRef } = get();
+        if (audioRef) audioRef.currentTime = time;
       },
     }),
     {
       name: "song-store",
+      partialize: (state) => ({
+        // include only safe stuff in localStorage
+        songs: state.songs,
+        shuffledSongs: state.shuffledSongs,
+        currentSong: state.currentSong,
+        currentIndex: state.currentIndex,
+        shuffle: state.shuffle,
+        repeat: state.repeat,
+        playing: state.playing,
+        volume: state.volume,
+      }),
     }
   )
 );

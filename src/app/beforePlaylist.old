@@ -120,23 +120,10 @@ export default function HomePage() {
   };
 
   const suggestions = songs.filter((s) => !usedIds.has(s.id)).slice(0, 6);
-
-  const handleClick = (song, playlistId, playlistSongs) => {
-  const { setPlaylist, setCurrentPlaylistId, setCurrentSong } = useSongStore.getState();
-
-  console.log("🎵 Playlist selected:", playlistId);
-  console.log("📃 Playlist songs count:", playlistSongs.length);
-  console.log("▶️ Current song selected:", song);
-  console.log("🗂️ Full playlist songs:", playlistSongs);
-
-
-  setPlaylist(playlistId, playlistSongs);
-  setCurrentPlaylistId(playlistId);
-  setCurrentSong(song);
-
-  router.push(`/player/${song.id}`);
-};
-
+  const handleClick = (song) => {
+    setCurrentSong(song);
+    router.push(`/player/${song.id}`);
+  };
 
   return (
     <div>
@@ -172,42 +159,23 @@ export default function HomePage() {
 
         {/* Sections */}
         <Section title="Recently Played">
-          <HorizontalCardScroll items={recent} onClick={(song) => handleClick(song, "recently-played", recent)} />
+          <HorizontalCardScroll items={recent} onClick={handleClick} />
         </Section>
 
         {suggestions.length > 0 && (
           <Section title="🎁 Just For You">
-            <GridCard items={suggestions} onClick={(song) => handleClick(song, "suggestions", suggestions)} />
+            <GridCard items={suggestions} onClick={handleClick} />
           </Section>
         )}
 
         <Section title="Lofi Chill">
           <HorizontalCardScroll
             items={getUniqueByTags(["lofi", "chill", "mellow", "dreamy"])}
-            onClick={(song) =>
-            handleClick(song, "lofi-chill", getUniqueByTags(["lofi", "chill", "mellow", "dreamy"]))}
+            onClick={handleClick}
           />
         </Section>
 
         {[...moods, ...tempoSections, ...eraSections, ...keySections].map(({ title, tags }) => {
-  const items = songs.filter((s) => s.tags?.some((t) => tags.includes(t)));
-  if (items.length === 0) return null;
-
-  // Create a playlistId by slugifying title or tags (simple example)
-  const playlistId = title.toLowerCase().replace(/\s+/g, "-");
-
-  return (
-    <Section key={title} title={title}>
-      <GridCard
-        items={items.slice(0, 8)}
-        onClick={(song) => handleClick(song, playlistId, items)}
-      />
-    </Section>
-  );
-})}
-
-
-        {/* {[...moods, ...tempoSections, ...eraSections, ...keySections].map(({ title, tags }) => {
           const items = songs.filter((s) =>
             s.tags?.some((t) => tags.includes(t))
           );
@@ -217,7 +185,7 @@ export default function HomePage() {
               <GridCard items={items.slice(0, 8)} onClick={handleClick} />
             </Section>
           );
-        })} */}
+        })}
       </div>
     </div>
   );

@@ -248,13 +248,13 @@ export default function PlayerPage({ onTogglePlaylist }) {
     useSongStore.getState().seekTo(time);
   };
 
-  const handleVolumeChange = (e) => {
+  /* const handleVolumeChange = (e) => {
     const vol = parseFloat(e.target.value);
     if (audioRef?.current) {
       audioRef.current.volume = vol;
     }
     setVolume(vol);
-  };
+  }; */
 
   const formatTime = (t) =>
     isNaN(t)

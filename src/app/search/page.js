@@ -40,6 +40,14 @@ export default function SearchPage() {
   }, [query, debouncedSearch]);
 
   const handleClick = (song) => {
+    const tempPlaylistId = "search-result"; // or `search-${Date.now()}` if truly dynamic
+    const playlistSongs = [song]; // if it's just 1 song or the search result list
+
+    const { setPlaylist, setCurrentPlaylistId, setCurrentSong } =
+      useSongStore.getState();
+
+    setPlaylist(tempPlaylistId, playlistSongs);
+    setCurrentPlaylistId(tempPlaylistId);
     setCurrentSong(song);
     router.push(`/player/${song.id}`);
   };
@@ -54,7 +62,7 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search songs, artists, albums..."
-          className="w-full bg-white/10 text-white px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-800 placeholder:text-white/50"
+          className="w-full bg-white/10 text-white px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-1 focus:ring-pink-500 placeholder:text-white/50"
         />
         <span className="absolute right-3 top-3 text-white/70 pointer-events-none">
           <Search size={20} />
@@ -85,7 +93,9 @@ export default function SearchPage() {
               </div>
               <div className="p-3">
                 <p className="text-white font-medium truncate">{song.title}</p>
-                <p className="text-sm text-neutral-400 truncate">{song.artist}</p>
+                <p className="text-sm text-neutral-400 truncate">
+                  {song.artist}
+                </p>
               </div>
             </div>
           ))}

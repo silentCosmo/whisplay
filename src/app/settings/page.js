@@ -1,14 +1,90 @@
-import Header from "@/components/Header";
+"use client";
 
-export default function Settings() {
+import { useState } from "react";
+import { Sun, Moon, Info, Trash2, Volume2 } from "lucide-react";
+import usePersistentState from "@/lib/usePersistentState";
+
+export default function SettingsPage() {
+  const [darkMode, setDarkMode] = usePersistentState("whisplay-theme", true);
+  const [volume, setVolume] = usePersistentState("volume", 0.8);
+
+  const toggleTheme = () => setDarkMode(!darkMode);
+
+  const clearStorage = () => {
+    if (confirm("Clear all app data from this device?")) {
+      localStorage.clear();
+      location.reload();
+    }
+  };
+
   return (
-    <>
-      <Header />
-      <div className="p-6 max-w-xl mx-auto space-y-4 text-center">
-        <h2 className="text-2xl font-bold">⚙️ Settings</h2>
-        <p className="text-glow/70">Made with love for Hi-Res audiophiles and nostalgic dreamers.</p>
-        <p className="text-xs text-pinky">By silentCosmo, in ❤️ with every FLAC.</p>
-      </div>
-    </>
+    <div className="max-w-screen-md mx-auto p-6 space-y-8 text-white">
+      <h1 className="text-3xl font-bold">Settings</h1>
+
+      {/* Theme Section */}
+      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            {darkMode ? <Moon size={20} /> : <Sun size={20} />}
+            <h2 className="text-lg font-medium">Appearance</h2>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className="px-4 py-1.5 text-sm bg-white/10 hover:bg-white/20 rounded-lg transition"
+          >
+            {darkMode ? "Dark" : "Light"} Mode
+          </button>
+        </div>
+      </section>
+
+      {/* Playback Settings */}
+      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Volume2 size={20} />
+            <h2 className="text-lg font-medium">Default Volume</h2>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={volume}
+            onChange={(e) => setVolume(parseFloat(e.target.value))}
+            className="w-32 accent-pink-500"
+          />
+        </div>
+      </section>
+
+      {/* Storage / Reset */}
+      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Trash2 size={20} />
+            <h2 className="text-lg font-medium">Clear App Data</h2>
+          </div>
+          <button
+            onClick={clearStorage}
+            className="px-4 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/40 rounded-lg transition"
+          >
+            Clear
+          </button>
+        </div>
+      </section>
+
+      {/* About */}
+      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10">
+        <div className="flex items-center gap-3 mb-2">
+          <Info size={20} />
+          <h2 className="text-lg font-medium">About Whisplay</h2>
+        </div>
+        <p className="text-sm text-white/70 leading-relaxed">
+          Whisplay is your cozy sound lounge — a minimal and elegant music
+          platform handcrafted for lovers of vibes and vision. Built with love,
+          motion, and many late-night debugging snacks. 💖
+        </p>
+        <p className="mt-4 text-xs text-white/40">v1.0.0 – Made with 💜 by SilentCosmo</p>
+      </section>
+    </div>
   );
 }

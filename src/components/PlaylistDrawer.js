@@ -2,7 +2,6 @@
 
 import ImageWithFallback from "@/lib/imageWithFallback";
 import useSongStore from "@/lib/songStore";
-import Image from "next/image";
 import { FaBan, FaInfinity, FaPlay, FaTimes } from "react-icons/fa";
 import { FaRandom, FaRedo, FaRedoAlt } from "react-icons/fa";
 
@@ -16,9 +15,25 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
     toggleShuffle,
     toggleRepeat,
     getShuffledSongs,
+    shuffledSongs,
+    getCurrentPlaylistSongs,
   } = useSongStore();
 
-  const displaySongs = shuffle ? getShuffledSongs() : songs;
+  //const displaySongs = shuffle ? shuffledSongs : getCurrentPlaylistSongs();
+
+  const playlistSongs = getCurrentPlaylistSongs?.() || [];
+  const displaySongs = shuffle ? shuffledSongs : playlistSongs;
+  const upcomingSongs = displaySongs.length <= 1
+    ? useSongStore.getState().generateSmartAutoplayPreview?.() || []
+    : [];
+
+  /* if (!displaySongs || !displaySongs.length) {
+    return (
+      <aside className="p-4">
+        <p className="text-sm text-center">No playlist loaded.</p>
+      </aside>
+    );
+  } */
 
   const handleSelect = (song) => {
     setCurrentSong(song);
@@ -44,9 +59,13 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
       }}
     >
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold" style={{ color: theme.vibrant }}>
+        {/* <h2 className="text-lg font-semibold" style={{ color: theme.vibrant }}>
           Playlist
+        </h2> */}
+        <h2 className="text-lg font-semibold" style={{ color: theme.vibrant }}>
+          {playlistSongs.length <= 1 ? "Now Playing" : "Playlist"}
         </h2>
+
         <button
           onClick={toggleShuffle}
           title="Shuffle"
@@ -134,6 +153,34 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
             </li>
           );
         })}
+        {upcomingSongs.length > 0 && (
+  <li className="mt-6 mb-2 text-sm font-semibold opacity-80" style={{ color: theme.vibrant }}>
+    Up Next
+  </li>
+)}
+
+{upcomingSongs.map((song) => (
+  <li
+    key={song.id}
+    onMouseEnter={() => handleHover(song)}
+    className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-all"
+    onClick={() => handleSelect(song)}
+    style={{ color: theme.lightMuted }}
+  >
+    <ImageWithFallback
+      src={song.cover}
+      width={50}
+      height={50}
+      alt={song.title}
+      className="rounded object-cover"
+    />
+    <div className="flex-1 overflow-hidden">
+      <p className="truncate font-medium">{song.title}</p>
+      <p className="text-xs truncate">{song.artist}</p>
+    </div>
+  </li>
+))}
+
       </ul>
     </aside>
   );
