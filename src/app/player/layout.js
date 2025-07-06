@@ -55,15 +55,30 @@ export default function PlayerLayout() {
     navigator.mediaSession.setActionHandler("seekto", null);
 
     // Update position state (call repeatedly during playback)
-    function updatePosition() {
+    /* function updatePosition() {
       if ("setPositionState" in navigator.mediaSession) {
         navigator.mediaSession.setPositionState({
           duration: duration,          // total length in seconds
           playbackRate: playing ? 1 : 0,
-          position: currentTime,       // current playback position in seconds
+          position: currentTime,       // current playback position in seconds      
+        }); 
+      }
+    } */
+
+      const updatePosition = () => {
+      if (
+        "setPositionState" in navigator.mediaSession &&
+        duration &&
+        currentTime != null &&
+        playing
+      ) {
+        navigator.mediaSession.setPositionState({
+          duration: duration,
+          position: currentTime,
+          playbackRate: 1,
         });
       }
-    }
+    };
 
     // Update immediately and then start interval updates every second
     updatePosition();

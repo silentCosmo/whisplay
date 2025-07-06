@@ -454,7 +454,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
                 type="range"
                 min="0"
                 max={duration}
-                step="0.1"
+                step="0.0001"
                 value={currentTime}
                 onChange={handleSeek}
                 className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
