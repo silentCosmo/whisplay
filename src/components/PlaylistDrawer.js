@@ -23,9 +23,14 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
 
   const playlistSongs = getCurrentPlaylistSongs?.() || [];
   const displaySongs = shuffle ? shuffledSongs : playlistSongs;
-  const upcomingSongs = displaySongs.length <= 1
+  const upcomingSongs = useSongStore.getState().generateSmartAutoplayPreview?.() || [];
+  /* const upcomingSongs = playlistSongs.length <= 1
+  ? useSongStore.getState().generateSmartAutoplayPreview?.() || []
+  : []; */
+  
+  /* const upcomingSongs = displaySongs.length <= 1
     ? useSongStore.getState().generateSmartAutoplayPreview?.() || []
-    : [];
+    : []; */
 
   /* if (!displaySongs || !displaySongs.length) {
     return (
@@ -35,10 +40,24 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
     );
   } */
 
-  const handleSelect = (song) => {
+  /* const handleSelect = (song) => {
+    console.log("plp:",song);
+    
     setCurrentSong(song);
     if (isMobile && onClose) onClose(); // close drawer on mobile
-  };
+  }; */
+
+  const handleSelect = (song, isFromAutoplay = false) => {
+  if (isFromAutoplay) {
+    const { generateSmartAutoplay } = useSongStore.getState();
+    generateSmartAutoplay(song); // 👈 generate based on this song
+  }
+
+  setCurrentSong(song);
+  useSongStore .getState().setPlaying(true);
+  if (isMobile && onClose) onClose();
+};
+
 
   const handleHover = (song) => {
     fetch(`/api/song?id=${song.id}`, { method: "HEAD" }).catch((err) =>
@@ -164,7 +183,7 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
     key={song.id}
     onMouseEnter={() => handleHover(song)}
     className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-all"
-    onClick={() => handleSelect(song)}
+    onClick={() => handleSelect(song, true)}
     style={{ color: theme.lightMuted }}
   >
     <ImageWithFallback

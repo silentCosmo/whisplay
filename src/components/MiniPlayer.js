@@ -94,12 +94,13 @@ export default function MiniPlayer() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
-          className="sticky bottom-14 left-2 right-2 z-50 bg-black/80 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden"
+          className={`sticky bottom-[3.40rem] left-2 right-2 z-50 bg-black/80 backdrop-blur-lg rounded-t-xl shadow-xl overflow-hidden`}
+          style={{borderTopColor:`${themeColor}33`, borderWidth: "0px", borderTopWidth:"3px"}}
         >
           {/* <audio ref={audioRef} preload="auto" /> */}
           {/* Progress Bar */}
-          <div
-            className="h-1"
+          {/* <div
+            className="h-[0.2rem]"
             style={{
               background: `${themeColor}33`,
               position: "relative",
@@ -113,6 +114,24 @@ export default function MiniPlayer() {
                 transition: "width 0.2s ease",
               }}
             />
+          </div> */}
+
+          <div
+            className="transition-all ease-in-out duration-300 w-full absolute top-0 left-0 animate-neon-line"
+            style={{
+              background: `${themeColor}33`,
+              position: "absolute",
+              top: 0,
+              animation: playing ? "none" : "neon-line 4s linear infinite",
+              height: !playing? "0.05rem":"0",
+            }}
+          >
+            { !playing &&
+            <div className="h-full bg-gradient-to-r animate-neon-bar" style={{
+                background: themeColor,
+                animation: playing ? "none" :  "neon-bar 10s ease-in-out infinite",
+                opacity: 0.3,
+              }} />}
           </div>
 
           {/* Player Body */}
@@ -155,6 +174,24 @@ export default function MiniPlayer() {
                 </button>
               </div>
             </div>
+          </div>
+          {/* Progress Bar */}
+          <div
+            className="h- transition-all ease-in-out duration-300"
+            style={{
+              background: `${themeColor}33`,
+              position: "relative",
+              height: playing? "0.25rem":"0",
+            }}
+          >
+            <div
+              className="h-full"
+              style={{
+                width: `${progress}%`,
+                background: themeColor,
+                transition: "width 0.2s ease",
+              }}
+            />
           </div>
         </motion.div>
       )}

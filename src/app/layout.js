@@ -28,9 +28,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${quickSand.className}  antialiased bg-[red]`}
+        className={`${quickSand.className}  antialiased bg-[red] overflow-hidden`}
       >
-        <main className="max-w-4xl mx-auto md:p-6 mb-3">{children}</main>
+        <main className="max-w-4xl mx-auto md:p-6 pb-10">{children}</main>
         <MiniPlayer/>
         <GlobalAudioPlayer/>
         <NavBar/>

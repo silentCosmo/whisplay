@@ -82,17 +82,6 @@ export default function PlayerLayout() {
       navigator.mediaSession.setActionHandler("seekforward", null);
       navigator.mediaSession.setActionHandler("seekto", null);
 
-      // Update position state (call repeatedly during playback)
-      /* function updatePosition() {
-      if ("setPositionState" in navigator.mediaSession) {
-        navigator.mediaSession.setPositionState({
-          duration: duration,          // total length in seconds
-          playbackRate: playing ? 1 : 0,
-          position: currentTime,       // current playback position in seconds      
-        }); 
-      }
-    } */
-
       const updatePosition = () => {
         if (
           "setPositionState" in navigator.mediaSession &&
@@ -100,11 +89,15 @@ export default function PlayerLayout() {
           currentTime != null &&
           playing
         ) {
+            try{
           navigator.mediaSession.setPositionState({
             duration: duration,
             position: currentTime,
             playbackRate: 1,
           });
+          } catch (e){
+            console.warn("MediaSession position update failed", e);
+          }
         }
       };
 

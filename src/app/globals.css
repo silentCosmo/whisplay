@@ -39,3 +39,34 @@ body {
 }
 
 
+@keyframes neon-line {
+  0% {
+    left: -100%;
+  }
+  50% {
+    left: 100%;
+  }
+  100% {
+    left: -100%;
+  }
+}
+
+@keyframes neon-bar {
+  0% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+.animate-neon-line {
+  animation: neon-line 4s linear infinite;
+}
+
+.animate-neon-bar {
+  animation: neon-bar 2s ease-in-out infinite;
+}

@@ -53,9 +53,11 @@ const keySections = [
   { title: "Key of G", tags: ["key-g"] },
   { title: "Key of A", tags: ["key-a"] },
   { title: "Key of B", tags: ["key-b"] },
-  { title: "Sharp & Flat Keys", tags: ["key-g♯", "key-a♭", "key-f♯", "key-d♯", "key-e♭"] },
+  {
+    title: "Sharp & Flat Keys",
+    tags: ["key-g♯", "key-a♭", "key-f♯", "key-d♯", "key-e♭"],
+  },
 ];
-
 
 export default function HomePage() {
   const router = useRouter();
@@ -99,7 +101,6 @@ export default function HomePage() {
       .slice(0, 8); // limit to top 8 tags
 
     setTopTags(sorted.map(([tag]) => tag));
-
   }, [songs]);
 
   const usedIds = new Set();
@@ -122,27 +123,26 @@ export default function HomePage() {
   const suggestions = songs.filter((s) => !usedIds.has(s.id)).slice(0, 6);
 
   const handleClick = (song, playlistId, playlistSongs) => {
-  const { setPlaylist, setCurrentPlaylistId, setCurrentSong } = useSongStore.getState();
+    const { setPlaylist, setCurrentPlaylistId, setCurrentSong } =
+      useSongStore.getState();
 
-  console.log("🎵 Playlist selected:", playlistId);
-  console.log("📃 Playlist songs count:", playlistSongs.length);
-  console.log("▶️ Current song selected:", song);
-  console.log("🗂️ Full playlist songs:", playlistSongs);
+    console.log("🎵 Playlist selected:", playlistId);
+    console.log("📃 Playlist songs count:", playlistSongs.length);
+    console.log("▶️ Current song selected:", song);
+    console.log("🗂️ Full playlist songs:", playlistSongs);
 
+    setPlaylist(playlistId, playlistSongs);
+    setCurrentPlaylistId(playlistId);
+    setCurrentSong(song);
 
-  setPlaylist(playlistId, playlistSongs);
-  setCurrentPlaylistId(playlistId);
-  setCurrentSong(song);
-
-  router.push(`/player/${song.id}`);
-};
-
+    router.push(`/player/${song.id}`);
+  };
 
   return (
     <div>
-      <Header />
 
-      <div className="px-6 py-8 space-y-12">
+      <Header />
+      <div className="px-6 py-18 mb-10 space-y-12 overflow-auto h-[93dvh]">
         {/* Hero */}
         {featured[0] && (
           <motion.div
@@ -161,7 +161,7 @@ export default function HomePage() {
               <h1 className="text-3xl font-bold mb-2">{featured[0].title}</h1>
               <p className="opacity-80 mb-4">{featured[0].artist}</p>
               <button
-                onClick={() => handleClick(featured[0])}
+                onClick={() => handleClick(featured[0], "featured", featured)}
                 className="inline-block bg-vibrant px-6 py-2 rounded-full font-semibold shadow hover:scale-105 transition"
               >
                 Listen Now
@@ -172,12 +172,18 @@ export default function HomePage() {
 
         {/* Sections */}
         <Section title="Recently Played">
-          <HorizontalCardScroll items={recent} onClick={(song) => handleClick(song, "recently-played", recent)} />
+          <HorizontalCardScroll
+            items={recent}
+            onClick={(song) => handleClick(song, "recently-played", recent)}
+          />
         </Section>
 
         {suggestions.length > 0 && (
           <Section title="🎁 Just For You">
-            <GridCard items={suggestions} onClick={(song) => handleClick(song, "suggestions", suggestions)} />
+            <GridCard
+              items={suggestions}
+              onClick={(song) => handleClick(song, "suggestions", suggestions)}
+            />
           </Section>
         )}
 
@@ -185,27 +191,35 @@ export default function HomePage() {
           <HorizontalCardScroll
             items={getUniqueByTags(["lofi", "chill", "mellow", "dreamy"])}
             onClick={(song) =>
-            handleClick(song, "lofi-chill", getUniqueByTags(["lofi", "chill", "mellow", "dreamy"]))}
+              handleClick(
+                song,
+                "lofi-chill",
+                getUniqueByTags(["lofi", "chill", "mellow", "dreamy"])
+              )
+            }
           />
         </Section>
 
-        {[...moods, ...tempoSections, ...eraSections, ...keySections].map(({ title, tags }) => {
-  const items = songs.filter((s) => s.tags?.some((t) => tags.includes(t)));
-  if (items.length === 0) return null;
+        {[...moods, ...tempoSections, ...eraSections, ...keySections].map(
+          ({ title, tags }) => {
+            const items = songs.filter((s) =>
+              s.tags?.some((t) => tags.includes(t))
+            );
+            if (items.length === 0) return null;
 
-  // Create a playlistId by slugifying title or tags (simple example)
-  const playlistId = title.toLowerCase().replace(/\s+/g, "-");
+            // Create a playlistId by slugifying title or tags (simple example)
+            const playlistId = title.toLowerCase().replace(/\s+/g, "-");
 
-  return (
-    <Section key={title} title={title}>
-      <GridCard
-        items={items.slice(0, 8)}
-        onClick={(song) => handleClick(song, playlistId, items)}
-      />
-    </Section>
-  );
-})}
-
+            return (
+              <Section key={title} title={title}>
+                <GridCard
+                  items={items.slice(0, 8)}
+                  onClick={(song) => handleClick(song, playlistId, items)}
+                />
+              </Section>
+            );
+          }
+        )}
 
         {/* {[...moods, ...tempoSections, ...eraSections, ...keySections].map(({ title, tags }) => {
           const items = songs.filter((s) =>
