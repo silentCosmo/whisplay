@@ -40,10 +40,13 @@ export default function PlayerLayout() {
       artist: currentSong.artist,
       album: currentSong.album || "",
       artwork: [
-        { src: currentSong.cover, sizes: "512x512", type: "image/jpeg" },
+        { src: `/api/proxy/image?src=${encodeURIComponent(currentSong.cover)}`, sizes: "512x512", type: "image/jpeg" },
         // add more sizes as needed
       ],
     });
+
+    console.log('proxy', fetch(`/api/proxy/image?src=${encodeURIComponent(currentSong.cover)}`));
+    
 
     // Action handlers (play, pause, next, prev, disable seek buttons)
     navigator.mediaSession.setActionHandler("play", () => setPlaying(true));
