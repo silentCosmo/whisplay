@@ -2,8 +2,18 @@
 
 import ImageWithFallback from "@/lib/imageWithFallback";
 import useSongStore from "@/lib/songStore";
-import { FaBan, FaInfinity, FaPlay, FaTimes } from "react-icons/fa";
+import {
+  FaBan,
+  FaInfinity,
+  FaPlay,
+  FaPlusCircle,
+  FaTimes,
+} from "react-icons/fa";
 import { FaRandom, FaRedo, FaRedoAlt } from "react-icons/fa";
+import { CgPlayListCheck } from "react-icons/cg";
+import { TbPlaylistX, TbPlaylistAdd } from "react-icons/tb";
+import { useState } from "react";
+import ConfirmModal from "./ConfirmModal";
 
 export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
   const {
@@ -17,47 +27,26 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
     getShuffledSongs,
     shuffledSongs,
     getCurrentPlaylistSongs,
+    queue,
+    addToQueue,
   } = useSongStore();
 
-  //const displaySongs = shuffle ? shuffledSongs : getCurrentPlaylistSongs();
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const playlistSongs = getCurrentPlaylistSongs?.() || [];
   const displaySongs = shuffle ? shuffledSongs : playlistSongs;
-  const upcomingSongs = useSongStore.getState().generateSmartAutoplayPreview?.() || [];
-  /* const upcomingSongs = playlistSongs.length <= 1
-  ? useSongStore.getState().generateSmartAutoplayPreview?.() || []
-  : []; */
-  
-  /* const upcomingSongs = displaySongs.length <= 1
-    ? useSongStore.getState().generateSmartAutoplayPreview?.() || []
-    : []; */
-
-  /* if (!displaySongs || !displaySongs.length) {
-    return (
-      <aside className="p-4">
-        <p className="text-sm text-center">No playlist loaded.</p>
-      </aside>
-    );
-  } */
-
-  /* const handleSelect = (song) => {
-    console.log("plp:",song);
-    
-    setCurrentSong(song);
-    if (isMobile && onClose) onClose(); // close drawer on mobile
-  }; */
+  const upcomingSongs =
+    useSongStore.getState().generateSmartAutoplayPreview?.() || [];
 
   const handleSelect = (song, isFromAutoplay = false) => {
-  if (isFromAutoplay) {
-    const { generateSmartAutoplay } = useSongStore.getState();
-    generateSmartAutoplay(song); // 👈 generate based on this song
-  }
-
-  setCurrentSong(song);
-  useSongStore .getState().setPlaying(true);
-  if (isMobile && onClose) onClose();
-};
-
+    if (isFromAutoplay) {
+      const { generateSmartAutoplay } = useSongStore.getState();
+      generateSmartAutoplay(song);
+    }
+    setCurrentSong(song);
+    useSongStore.getState().setPlaying(true);
+    if (isMobile && onClose) onClose();
+  };
 
   const handleHover = (song) => {
     fetch(`/api/song?id=${song.id}`, { method: "HEAD" }).catch((err) =>
@@ -78,9 +67,6 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
       }}
     >
       <div className="flex justify-between items-center mb-4">
-        {/* <h2 className="text-lg font-semibold" style={{ color: theme.vibrant }}>
-          Playlist
-        </h2> */}
         <h2 className="text-lg font-semibold" style={{ color: theme.vibrant }}>
           {playlistSongs.length <= 1 ? "Now Playing" : "Playlist"}
         </h2>
@@ -89,7 +75,6 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
           onClick={toggleShuffle}
           title="Shuffle"
           className="transition hover:scale-110"
-          //className={shuffle ? "text-green-400" : "text-gray-400"}
           style={{
             color: shuffle ? theme.vibrant : theme.lightMuted,
             opacity: shuffle ? 1 : 0.4,
@@ -108,12 +93,7 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
             className="transition hover:scale-110"
           >
             {repeat === "none" && (
-              <FaRedo
-                style={{
-                  color: theme.lightMuted,
-                  opacity: 0.4,
-                }}
-              />
+              <FaRedo style={{ color: theme.lightMuted, opacity: 0.4 }} />
             )}
             {repeat === "one" && (
               <FaRedoAlt
@@ -141,7 +121,38 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
         )}
       </div>
 
-      <ul className="space-y-3 overflow-y-auto max-h-[65vh] sm:max-h-none">
+      {/* <ul className="space-y-3 overflow-y-auto max-h-[65vh] sm:max-h-none">
+        {queue.length > 0 && (
+          <>
+            <li className="mt-1 mb-2 text-sm font-semibold" style={{ color: theme.vibrant }}>
+              Queued Songs
+            </li>
+            {queue.map((song) => (
+              <li
+                key={song.id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-white/5"
+                style={{ color: theme.lightMuted }}
+                onMouseEnter={() => handleHover(song)}
+                onClick={() => handleSelect(song)}
+              >
+                <ImageWithFallback
+                  src={song.cover}
+                  width={50}
+                  height={50}
+                  alt={song.title}
+                  className="rounded object-cover"
+                />
+                <div className="flex-1 overflow-hidden">
+                  <p className="truncate font-medium">{song.title}</p>
+                  <p className="text-xs truncate">{song.artist}</p>
+                </div>
+                <FaPlay className="text-xs opacity-50" />
+              </li>
+            ))}
+            <hr className="my-2 border-white/10" />
+          </>
+        )}
+
         {displaySongs.map((song) => {
           const active = currentSong?.id === song.id;
           return (
@@ -168,39 +179,253 @@ export default function PlaylistDrawer({ theme, isMobile = false, onClose }) {
                 <p className="truncate font-medium">{song.title}</p>
                 <p className="text-xs truncate">{song.artist}</p>
               </div>
-              {active && <FaPlay className="text-xs" />}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToQueue(song);
+                }}
+                title="Add to queue"
+                className="text-xs text-white/50 hover:text-white"
+              >
+                <FaPlusCircle />
+              </button>
             </li>
           );
         })}
+
         {upcomingSongs.length > 0 && (
-  <li className="mt-6 mb-2 text-sm font-semibold opacity-80" style={{ color: theme.vibrant }}>
-    Up Next
-  </li>
-)}
+          <li
+            className="mt-6 mb-2 text-sm font-semibold opacity-80"
+            style={{ color: theme.vibrant }}
+          >
+            Up Next
+          </li>
+        )}
 
-{upcomingSongs.map((song) => (
-  <li
-    key={song.id}
-    onMouseEnter={() => handleHover(song)}
-    className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-all"
-    onClick={() => handleSelect(song, true)}
-    style={{ color: theme.lightMuted }}
-  >
-    <ImageWithFallback
-      src={song.cover}
-      width={50}
-      height={50}
-      alt={song.title}
-      className="rounded object-cover"
-    />
-    <div className="flex-1 overflow-hidden">
-      <p className="truncate font-medium">{song.title}</p>
-      <p className="text-xs truncate">{song.artist}</p>
-    </div>
-  </li>
-))}
+        {upcomingSongs.map((song) => (
+          <li
+            key={song.id}
+            onMouseEnter={() => handleHover(song)}
+            className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-all"
+            onClick={() => handleSelect(song, true)}
+            style={{ color: theme.lightMuted }}
+          >
+            <ImageWithFallback
+              src={song.cover}
+              width={50}
+              height={50}
+              alt={song.title}
+              className="rounded object-cover"
+            />
+            <div className="flex-1 overflow-hidden">
+              <p className="truncate font-medium">{song.title}</p>
+              <p className="text-xs truncate">{song.artist}</p>
+            </div>
+          </li>
+        ))}
+      </ul> */}
 
+      <ul className="space-y-3 overflow-y-auto max-h-[65vh] sm:max-h-none">
+        {/* 🎵 CURRENT PLAYING SONG */}
+        {currentSong && (
+          <>
+            <li
+              className="text-sm font-semibold mb-2"
+              style={{ color: theme.vibrant }}
+            >
+              Now Playing
+            </li>
+            <li
+              className="flex items-center gap-3 p-3 rounded-lg bg-white/5"
+              style={{ color: theme.darkMuted }}
+            >
+              <ImageWithFallback
+                src={currentSong.cover}
+                width={50}
+                height={50}
+                alt={currentSong.title}
+                className="rounded object-cover"
+              />
+              <div className="flex-1 overflow-hidden">
+                <p className="truncate font-medium">{currentSong.title}</p>
+                <p className="text-xs truncate">{currentSong.artist}</p>
+              </div>
+              <FaPlay className="text-xs opacity-80" />
+            </li>
+            <hr className="my-2 border-white/10" />
+          </>
+        )}
+
+        {/* 🎯 QUEUE LIST */}
+        {queue.length > 0 && (
+          <>
+            <div className="flex justify-between items-center mb-2">
+              <li
+                className="text-sm font-semibold"
+                style={{ color: theme.vibrant }}
+              >
+                Queued Songs
+              </li>
+              <button
+                className="text-xs text-white/50 hover:text-white transition"
+                onClick={() => setConfirmClear(true)}
+              >
+                Clear All
+              </button>
+            </div>
+
+            {queue.map((song) => {
+              const isCurrent = currentSong?.id === song.id;
+              return (
+                <li
+                  key={song.id}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-white/5"
+                  //style={{ color: theme.lightMuted }}
+                  onMouseEnter={() => handleHover(song)}
+                  onClick={() => handleSelect(song)}
+                  style={{
+                    backgroundColor: isCurrent ? theme.vibrant : "transparent",
+                    color: isCurrent ? theme.darkMuted : theme.lightMuted,
+                  }}
+                >
+                  <ImageWithFallback
+                    src={song.cover}
+                    width={50}
+                    height={50}
+                    alt={song.title}
+                    className="rounded object-cover"
+                  />
+                  <div className="flex-1 overflow-hidden">
+                    <p className="truncate font-medium">{song.title}</p>
+                    <p className="text-xs truncate">{song.artist}</p>
+                  </div>
+                  {/* <FaPlay className="text-xs opacity-50" /> */}
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      useSongStore.getState().removeFromQueue(song.id);
+                    }}
+                    title="Remove from queue"
+                    className="text-xs text-white/50 hover:text-white"
+                  >
+                    <TbPlaylistX size={24} className="text-red-600" />
+                  </button>
+                </li>
+              );
+            })}
+            <hr className="my-2 border-white/10" />
+          </>
+        )}
+
+        {/* 🧠 PLAYLIST */}
+        {displaySongs.length > 0 && (
+          <>
+            <li
+              className="text-sm font-semibold"
+              style={{ color: theme.vibrant }}
+            >
+              Playlist
+            </li>
+            {displaySongs.map((song) => {
+              const isCurrent =
+                !queue.length > 0 && currentSong?.id === song.id;
+              return (
+                <li
+                  key={song.id}
+                  onMouseEnter={() => handleHover(song)}
+                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                    isCurrent
+                      ? "shadow-md ring-1 ring-white/30"
+                      : "hover:bg-white/10"
+                  }`}
+                  onClick={() => handleSelect(song)}
+                  style={{
+                    backgroundColor: isCurrent ? theme.vibrant : "transparent",
+                    color: isCurrent ? theme.darkMuted : theme.lightMuted,
+                  }}
+                >
+                  <ImageWithFallback
+                    src={song.cover}
+                    width={50}
+                    height={50}
+                    alt={song.title}
+                    className="rounded object-cover"
+                  />
+                  <div className="flex-1 overflow-hidden">
+                    <p className="truncate font-medium">{song.title}</p>
+                    <p className="text-xs truncate">{song.artist}</p>
+                  </div>
+                  {queue.find((s) => s.id === song.id) ? (
+                    <CgPlayListCheck size={24} className="text-green-400" />
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToQueue(song);
+                      }}
+                      title="Add to queue"
+                      className="text-xs text-white/50 hover:text-white"
+                    >
+                      <TbPlaylistAdd size={24} />
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+            <hr className="my-2 border-white/10" />
+          </>
+        )}
+
+        {/* 🚀 SMART AUTOPLAY */}
+        {upcomingSongs.length > 0 && (
+          <>
+            <li
+              className="text-sm font-semibold"
+              style={{ color: theme.vibrant }}
+            >
+              Up Next
+            </li>
+            {upcomingSongs.map((song) => (
+              <li
+                key={song.id}
+                onMouseEnter={() => handleHover(song)}
+                className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-all"
+                onClick={() => handleSelect(song, true)}
+                style={{ color: theme.lightMuted }}
+              >
+                <ImageWithFallback
+                  src={song.cover}
+                  width={50}
+                  height={50}
+                  alt={song.title}
+                  className="rounded object-cover"
+                />
+                <div className="flex-1 overflow-hidden">
+                  <p className="truncate font-medium">{song.title}</p>
+                  <p className="text-xs truncate">{song.artist}</p>
+                </div>
+              </li>
+            ))}
+          </>
+        )}
       </ul>
+
+      {confirmClear && (
+        <ConfirmModal
+          title="Clear Queue?"
+          message="Are you sure you want to remove all songs from your queue?"
+          onConfirm={() => {
+            useSongStore.getState().clearQueue();
+            setConfirmClear(false);
+          }}
+          onCancel={() => setConfirmClear(false)}
+          style={{
+            background: isMobile ? theme.darkMuted : theme.muted,
+            color: theme.lightMuted,
+          }}
+        />
+      )}
     </aside>
   );
 }

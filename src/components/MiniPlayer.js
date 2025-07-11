@@ -95,7 +95,7 @@ export default function MiniPlayer() {
           exit={{ opacity: 0, y: 40 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
           className={`sticky bottom-[3.40rem] left-2 right-2 z-50 bg-black/80 backdrop-blur-lg rounded-t-xl shadow-xl overflow-hidden`}
-          style={{borderTopColor:`${themeColor}33`, borderWidth: "0px", borderTopWidth:"3px"}}
+          style={{borderTopColor:`${themeColor}33`, borderWidth: "0px", borderTopWidth: !playing ?"3px":"0"} }
         >
           {/* <audio ref={audioRef} preload="auto" /> */}
           {/* Progress Bar */}
@@ -123,7 +123,7 @@ export default function MiniPlayer() {
               position: "absolute",
               top: 0,
               animation: playing ? "none" : "neon-line 4s linear infinite",
-              height: !playing? "0.05rem":"0",
+              height: !playing? "0.05rem":"0rem",
             }}
           >
             { !playing &&

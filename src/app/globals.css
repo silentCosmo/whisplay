@@ -34,6 +34,11 @@ body {
   100% { transform: translateX(-100%); }
 }
 
+/* Tailwind variant for applying the animation */
+  .animate-scrollText {
+    animation: scrollText 10s linear infinite;
+  }
+
 .scroll-pause:hover {
   animation-play-state: paused;
 }
@@ -69,4 +74,10 @@ body {
 
 .animate-neon-bar {
   animation: neon-bar 2s ease-in-out infinite;
+}
+
+
+select option {
+  background-color: #1a1a1c !important; /* Change to your desired color */
+  /* Adjust text color for readability */
 }

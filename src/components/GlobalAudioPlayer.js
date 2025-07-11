@@ -43,38 +43,36 @@ export default function GlobalAudioProvider() {
   }, [currentSong]); */
 
   useEffect(() => {
-  const audio = audioRef.current;
-  if (!audio || !currentSong?.url) return;
+    const audio = audioRef.current;
+    if (!audio || !currentSong?.url) return;
 
-  const fullUrl = location.origin + currentSong.url;
+    const fullUrl = location.origin + currentSong.url;
 
-  if (audio.src !== fullUrl) {
-    audio.src = fullUrl;
-    audio.load();
+    if (audio.src !== fullUrl) {
+      audio.src = fullUrl;
+      audio.load();
 
-    // Only play if playing state is true (so manual pause still works)
-    if (playing) {
-      const tryPlay = () => {
-        audio.play().catch((err) => {
-          console.warn("🎧 Auto play failed:", err.message);
-          setPlaying(false);
-        });
-      };
-
-      if (audio.readyState >= 2) {
-        tryPlay();
-      } else {
-        const onLoadedMeta = () => {
-          tryPlay();
-          audio.removeEventListener("loadedmetadata", onLoadedMeta);
+      // Only play if playing state is true (so manual pause still works)
+      if (playing) {
+        const tryPlay = () => {
+          audio.play().catch((err) => {
+            console.warn("🎧 Auto play failed:", err.message);
+            setPlaying(false);
+          });
         };
-        audio.addEventListener("loadedmetadata", onLoadedMeta);
+
+        if (audio.readyState >= 2) {
+          tryPlay();
+        } else {
+          const onLoadedMeta = () => {
+            tryPlay();
+            audio.removeEventListener("loadedmetadata", onLoadedMeta);
+          };
+          audio.addEventListener("loadedmetadata", onLoadedMeta);
+        }
       }
     }
-  }
-}, [currentSong, playing]);
-
-
+  }, [currentSong, playing]);
 
   // Handle playing state
   useEffect(() => {
@@ -86,8 +84,6 @@ export default function GlobalAudioProvider() {
       audio.pause();
     }
   }, [playing]);
-
-  
 
   return (
     <audio
@@ -110,41 +106,46 @@ export default function GlobalAudioProvider() {
         if (repeat === "one") {
           audioRef.current.currentTime = 0;
           audioRef.current.play();
-          return
+          return;
         } /* else {
           setPlaying(false);
           } */
-       playNext();
-       
-          const {
-    getCurrentPlaylistSongs,
-    currentSong,
-    setCurrentSong,
-    setPlaying,
-    generateSmartAutoplayPreview,
-  } = useSongStore.getState();
+         
+        playNext();
 
-  const playlist = getCurrentPlaylistSongs?.() || [];
-  const currentIndex = playlist.findIndex((s) => s.id === currentSong?.id);
+        /* const {
+          getCurrentPlaylistSongs,
+          currentSong,
+          setCurrentSong,
+          setPlaying,
+          generateSmartAutoplayPreview,
+        } = useSongStore.getState();
 
-  if (currentIndex >= 0 && currentIndex < playlist.length - 1) {
-    const next = playlist[currentIndex + 1];
-    setCurrentSong(next);
-    setPlaying(true); // <==== Play immediately!
-    return;
-  }
+        const playlist = getCurrentPlaylistSongs?.() || [];
+        const currentIndex = playlist.findIndex(
+          (s) => s.id === currentSong?.id
+        );
 
-  const fallbackQueue = generateSmartAutoplayPreview?.(currentSong) || [];
-  if (fallbackQueue.length > 0) {
-    console.log("🎯 Playing from Up Next fallback:", fallbackQueue[0]?.title);
-    setCurrentSong(fallbackQueue[0]);
-    setPlaying(true); // <==== Play immediately!
-    return;
-  }
+        if (currentIndex >= 0 && currentIndex < playlist.length - 1) {
+          const next = playlist[currentIndex + 1];
+          setCurrentSong(next);
+          setPlaying(true); // <==== Play immediately!
+          return;
+        }
 
-  console.log("⛔ Playback ended. No songs left.");
-  setPlaying(false);
+        const fallbackQueue = generateSmartAutoplayPreview?.(currentSong) || [];
+        if (fallbackQueue.length > 0) {
+          console.log(
+            "🎯 Playing from Up Next fallback:",
+            fallbackQueue[0]?.title
+          );
+          setCurrentSong(fallbackQueue[0]);
+          setPlaying(true); // <==== Play immediately!
+          return;
+        }
 
+        console.log("⛔ Playback ended. No songs left.");
+        setPlaying(false); */
       }}
     />
   );

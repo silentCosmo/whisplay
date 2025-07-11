@@ -23,6 +23,8 @@ const useSongStore = create(
   persist(
     (set, get) => ({
       //playlists: {}, // { playlistId: [song1, song2, ...], ... }
+      songs: [],
+      queue: [],
       playlists: {},
       currentPlaylistId: null,
       currentSong: null,
@@ -32,7 +34,9 @@ const useSongStore = create(
       repeat: "not",
       volume: 1,
       playing: false,
-      songs: [], // initial empty array
+      queueIndex: 0,
+      setQueueIndex: (index) => set({ queueIndex: index }),
+
       setSongs: (songs) => set({ songs }),
 
       setRepeat: (mode) => set({ repeat: mode }),
@@ -41,6 +45,19 @@ const useSongStore = create(
           const next = { all: "one", one: "none", none: "all" };
           return { repeat: next[s.repeat] };
         }),
+
+      addToQueue: (song) => {
+        set((state) => ({
+          queue: [...state.queue, song],
+          queueIndex: state.queue.length === 0 ? 0 : state.queueIndex,
+        }));
+        console.log("added to quee:", song);
+      },
+      removeFromQueue: (id) => {
+        const queue = get().queue.filter((s) => s.id !== id);
+        set({ queue });
+      },
+      clearQueue: () => set({ queue: [], queueIndex: 0 }),
 
       setPlaylist: (playlistId, songs) => {
         const { shuffle, currentSong } = get();
@@ -146,8 +163,9 @@ const useSongStore = create(
         return shuffleArray(playlist);
       },
 
-      playNext: () => {
+      /* playNext: () => {
         const {
+          queue,
           playlists,
           currentPlaylistId,
           currentIndex,
@@ -157,12 +175,22 @@ const useSongStore = create(
           setCurrentSong,
         } = get();
 
+        if (queue.length > 0) {
+          const [nextFromQueue, ...rest] = queue;
+          set({ queue: rest });
+          setCurrentSong(nextFromQueue);
+          return;
+        }
+
         const playlist = playlists[currentPlaylistId] || [];
         const list = shuffle ? shuffledSongs : playlist;
 
+        
+        
         if (!list.length) return;
-
+        
         let nextIndex = currentIndex + 1;
+        console.log("next", nextIndex);
 
         if (nextIndex >= list.length) {
           if (repeat === "all") {
@@ -182,9 +210,98 @@ const useSongStore = create(
           progress: 0,
           duration: 0,
         });
-      },
+      }, */
 
-      playPrevious: () => {
+      playNext: () => {
+        const {
+          queue,
+          playlists,
+          currentPlaylistId,
+          currentIndex,
+          shuffle,
+          shuffledSongs,
+          repeat,
+          setCurrentSong,
+          setPlaylist,
+          queuedToBeRemoved,
+          setCurrentPlaylistId,
+          getCurrentPlaylistSongs,
+          generateSmartAutoplayPreview,
+        } = get();
+
+        /* let workingQueue = [...queue];
+
+  if (queuedToBeRemoved) {
+    workingQueue = workingQueue.filter((song) => song.id !== queuedToBeRemoved);
+    set({ queuedToBeRemoved: null, queue: workingQueue });
+  }
+
+  // 👇 Proceed as usual
+  if (workingQueue.length > 0) {
+    const [nextFromQueue, ...rest] = workingQueue;
+    set({ queue: rest });
+    setCurrentSong(nextFromQueue);
+    set({ queuedToBeRemoved: nextFromQueue.id });
+    return;
+  } */
+
+        if (queue.length > 0) {
+          const { queueIndex } = get();
+          const nextFromQueue = queue[queueIndex];
+          if (!nextFromQueue) {
+            // No more queue, fallback to playlist or autoplay
+            // ...
+            return;
+          }
+          set({ queueIndex: queueIndex + 1 });
+          setCurrentSong(nextFromQueue);
+          return;
+        }
+
+        // 2. Get playlist
+        const playlist = playlists[currentPlaylistId] || [];
+        const list = shuffle ? shuffledSongs : playlist;
+
+        // 3. Nothing to play
+        if (!list.length) return;
+
+        let nextIndex = currentIndex + 1;
+
+        // 4. End of playlist reached
+        if (nextIndex >= list.length) {
+          if (repeat === "all") {
+            nextIndex = 0;
+          } else {
+            // 5. Generate new autoplay playlist and play it
+            const fallback =
+              generateSmartAutoplayPreview?.(get().currentSong) || [];
+
+            if (fallback.length > 0) {
+              const autoplayId = `autoplay-${Date.now()}`;
+              const newPlaylist = [get().currentSong, ...fallback];
+
+              setPlaylist(autoplayId, newPlaylist);
+              setCurrentPlaylistId(autoplayId);
+              set({ currentIndex: 0 });
+              setCurrentSong(newPlaylist[1]); // Skip current song
+              return;
+            }
+
+            return; // no fallback
+          }
+        }
+
+        // 6. Normal next song flow
+        const nextSong = list[nextIndex];
+        set({ currentIndex: nextIndex });
+        setCurrentSong(nextSong);
+        set({
+          currentTime: 0,
+          progress: 0,
+          duration: 0,
+        });
+      },
+      /* playPrevious: () => {
         const {
           playlists,
           currentPlaylistId,
@@ -209,6 +326,42 @@ const useSongStore = create(
           progress: 0,
           duration: 0,
         });
+      }, */
+
+      playPrevious: () => {
+        const {
+          queue,
+          playlists,
+          currentPlaylistId,
+          currentIndex,
+          currentSong,
+          shuffle,
+          shuffledSongs,
+          setCurrentSong,
+          getCurrentPlaylistSongs,
+        } = get();
+
+        const playlist = getCurrentPlaylistSongs?.() || [];
+        const list = shuffle ? shuffledSongs : playlist;
+
+        // 💡 Try to find previous in current queue first
+        const { queueIndex } = get();
+        if (queue.length > 0 && queueIndex > 1) {
+          const prevInQueue = queue[queueIndex - 2];
+          set({ queueIndex: queueIndex - 1 });
+          setCurrentSong(prevInQueue);
+          return;
+        }
+
+        // 🔄 Fallback to playlist navigation
+        if (!list.length) return;
+
+        let prevIndex = currentIndex - 1;
+        if (prevIndex < 0) prevIndex = list.length - 1;
+
+        const prevInPlaylist = list[prevIndex];
+        set({ currentIndex: prevIndex });
+        setCurrentSong(prevInPlaylist);
       },
 
       // Volume & playback controls (unchanged)
@@ -255,6 +408,7 @@ const useSongStore = create(
         playing: state.playing,
         volume: state.volume,
         songs: state.songs,
+        queue: state.queue,
       }),
     }
   )

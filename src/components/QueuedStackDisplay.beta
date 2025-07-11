@@ -1,0 +1,47 @@
+"use client";
+import { useEffect, useRef } from "react";
+import Image from "next/image";
+import useSongStore from "@/lib/songStore";
+
+// ✅ Global Ref
+export const queueStackRef = { current: null };
+
+export default function QueuedStackDisplay() {
+  const { queue } = useSongStore();
+  const localRef = useRef(null);
+
+  useEffect(() => {
+    if (localRef.current) {
+      console.log("🎯 Setting queueStackRef:", localRef.current);
+      queueStackRef.current = localRef.current;
+    }
+  }, [localRef]);
+
+  if (queue.length === 0) return null;
+
+  return (
+    <div
+      ref={localRef}
+      className="fixed bottom-[84px] right-3 z-[9999] flex items-end gap-[-10px] px-1 py-1 backdrop-blur-sm rounded-xl bg-black/40 shadow-lg border border-white/10 overflow-hidden"
+    >
+      {queue.slice(-4).map((song, idx) => (
+        <div
+          key={song.id}
+          className="w-10 h-10 rounded-full overflow-hidden relative"
+          style={{
+            transform: `translateX(-${idx * 16}px)`,
+            zIndex: 10 - idx,
+          }}
+        >
+          <Image
+            src={song.cover}
+            alt={song.title}
+            width={40}
+            height={40}
+            className="w-full h-full object-cover rounded-full border border-white/20"
+          />
+        </div>
+      ))}
+    </div>
+  );
+}

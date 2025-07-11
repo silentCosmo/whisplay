@@ -140,9 +140,8 @@ export default function HomePage() {
 
   return (
     <div>
-
       <Header />
-      <div className="px-6 py-18 mb-10 space-y-12 overflow-auto h-[93dvh]">
+      <div className="px-6 py-20 mb-10 space-y-12 overflow-auto h-[93dvh]">
         {/* Hero */}
         {featured[0] && (
           <motion.div
@@ -187,7 +186,7 @@ export default function HomePage() {
           </Section>
         )}
 
-        <Section title="Lofi Chill">
+        {/* <Section title="Lofi Chill">
           <HorizontalCardScroll
             items={getUniqueByTags(["lofi", "chill", "mellow", "dreamy"])}
             onClick={(song) =>
@@ -198,6 +197,26 @@ export default function HomePage() {
               )
             }
           />
+        </Section> */}
+
+        <Section title="Lofi Chill">
+          {/* Calculate the playlist once and reuse it */}
+          {(() => {
+            const lofiChillSongs = getUniqueByTags([
+              "lofi",
+              "chill",
+              "mellow",
+              "dreamy",
+            ]);
+            return (
+              <HorizontalCardScroll
+                items={lofiChillSongs}
+                onClick={(song) =>
+                  handleClick(song, "lofi-chill", lofiChillSongs)
+                }
+              />
+            );
+          })()}
         </Section>
 
         {[...moods, ...tempoSections, ...eraSections, ...keySections].map(
