@@ -38,7 +38,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-screen-md h-[99dvh] overflow-auto mx-auto p-6 pb-16 space-y-8 text-white">
+    <div className="max-w-screen-md h-[99dvh] overflow-auto mx-auto p-6 pb-32 space-y-8 text-white">
       <h1 className="text-3xl font-bold">Settings</h1>
 
       {/* Theme Section */}
@@ -131,7 +131,7 @@ export default function SettingsPage() {
       </section>
 
       {/* About */}
-      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10">
+      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10 mb-32">
         <div className="flex items-center gap-3 mb-2">
           <Info size={20} />
           <h2 className="text-lg font-medium">About Whisplay</h2>

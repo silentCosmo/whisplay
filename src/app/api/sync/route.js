@@ -4,6 +4,7 @@ import { connectToDB } from "@/lib/db";
 import { Readable } from "stream";
 import { Vibrant } from "node-vibrant/node";
 import { autoTags } from "@/lib/autoTags";
+import { cookies as getCookies } from "next/headers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export async function GET(req) {
       };
 
       try {
-        const auth = new google.auth.GoogleAuth({
+        /* const auth = new google.auth.GoogleAuth({
           credentials: {
             client_email: process.env.GOOGLE_CLIENT_EMAIL,
             private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
@@ -29,9 +30,47 @@ export async function GET(req) {
             "https://www.googleapis.com/auth/drive.readonly",
             "https://www.googleapis.com/auth/drive.file",
           ],
-        });
+        }); */
 
-        const drive = google.drive({ version: "v3", auth });
+        const allCookies = await getCookies(); // ✅ await here
+
+        console.log("ak",allCookies);
+        
+
+  const accessToken = allCookies.get("google_access_token")?.value;
+  const refreshToken = allCookies.get("google_refresh_token")?.value;
+
+        if (!accessToken) {
+  return new Response("❌ Not authorized. Please login first.", { status: 401 });
+}
+
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
+
+oauth2Client.setCredentials({
+  access_token: accessToken,
+  refresh_token: refreshToken,
+});
+
+// (Optional) refresh token handling
+oauth2Client.on("tokens", (tokens) => {
+  const cookieStore = cookies();
+  if (tokens.access_token) {
+    cookieStore.set("google_access_token", tokens.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Lax",
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+  }
+});
+
+
+        const drive = google.drive({ version: "v3", auth: oauth2Client });
+
         const list = await drive.files.list({
           q: "mimeType contains 'audio/'",
           fields: "files(id, name, mimeType)",

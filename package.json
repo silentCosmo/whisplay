@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "color-thief-browser": "^2.0.2",
+    "cookies-next": "^6.0.0",
     "googleapis": "^150.0.1",
     "howler": "^2.2.4",
     "lodash.debounce": "^4.0.8",

@@ -1,4 +1,5 @@
 "use client";
+import GoogleLoginButton from "@/components/admin/adminLogin";
 import { useEffect, useRef, useState } from "react";
 import { AiOutlineSync } from "react-icons/ai";
 import { ImSpinner3 } from "react-icons/im";
@@ -88,6 +89,8 @@ export default function SyncStatus() {
         >
           {syncing ?(<span className="flex items-center gap-1"><ImSpinner3 size={22} className="animate-spin"/> <p>Syncing...</p></span>) : "Start Sync"}
         </button>
+
+        <GoogleLoginButton/>
 
         <label className="flex items-center gap-2 text-sm text-pink-400">
           <input
