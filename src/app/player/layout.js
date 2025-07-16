@@ -66,11 +66,6 @@ export default function PlayerLayout() {
         ],
       });
 
-      console.log(
-        "proxy",
-        fetch(`/api/proxy/image?src=${encodeURIComponent(currentSong.cover)}`)
-      );
-
       // Action handlers (play, pause, next, prev, disable seek buttons)
       navigator.mediaSession.setActionHandler("play", () => setPlaying(true));
       navigator.mediaSession.setActionHandler("pause", () => setPlaying(false));
@@ -113,7 +108,7 @@ export default function PlayerLayout() {
   return (
     <div className="min-h-[100dvh] flex flex-col sm:flex-row relative">
       <div className="flex-1 relative">
-        <header
+        {/* <header
           //className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-5xl px-6 py-3 rounded-full flex justify-between items-center backdrop-blur-md bg-black/30 border border-white/10 shadow-lg"
           className="absolute top-0 pt-10 left-1/2 transform -translate-x-1/2 z-20 w-[100%] max-w-5xl px-6 py-3 flex justify-between items-center bg-gradient-to-b from-black/30 to-transparent"
           style={{ color: theme.lightMuted }}
@@ -139,7 +134,7 @@ export default function PlayerLayout() {
           </span>
 
           <div className="text-xs opacity-60">v1.0</div>
-        </header>
+        </header> */}
         <PlayerPage onTogglePlaylist={() => setShowPlaylist((prev) => !prev)} />
       </div>
 

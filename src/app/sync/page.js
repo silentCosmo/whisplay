@@ -87,16 +87,36 @@ export default function SyncStatus() {
           } text-white`}
           disabled={syncing}
         >
-          {syncing ?(<span className="flex items-center gap-1"><ImSpinner3 size={22} className="animate-spin"/> <p>Syncing...</p></span>) : "Start Sync"}
+          {syncing ? (
+            <span className="flex items-center gap-1">
+              <ImSpinner3 size={22} className="animate-spin" />{" "}
+              <p>Syncing...</p>
+            </span>
+          ) : (
+            "Start Sync"
+          )}
         </button>
 
-        <GoogleLoginButton/>
+        <GoogleLoginButton />
 
         <label className="flex items-center gap-2 text-sm text-pink-400">
           <input
             type="checkbox"
             checked={force}
-            onChange={(e) => setForce(e.target.checked)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                const pass = prompt(
+                  "Enter admin passcode to enable force sync:"
+                );
+                if (pass === "sugarPlay") {
+                  setForce(true);
+                } else {
+                  alert("❌ Incorrect passcode.");
+                }
+              } else {
+                setForce(false);
+              }
+            }}
             className="accent-pink-500"
             disabled={syncing}
           />

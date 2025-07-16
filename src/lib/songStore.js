@@ -34,6 +34,8 @@ const useSongStore = create(
       repeat: "not",
       volume: 1,
       playing: false,
+      isBuffering: false,
+      setIsBuffering: (val) => set({ isBuffering: val }),
       queueIndex: 0,
       setQueueIndex: (index) => set({ queueIndex: index }),
 

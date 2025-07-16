@@ -15,6 +15,7 @@ import {
   FaTint,
   FaCircleNotch,
   FaCircle,
+  FaArrowLeft,
 } from "react-icons/fa";
 import { LuAudioWaveform } from "react-icons/lu";
 import { PiWaveformBold } from "react-icons/pi";
@@ -27,12 +28,15 @@ import VisualizerCanvas from "@/lib/visualizerCanvas";
 
 import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
 import ImageWithFallback from "@/lib/imageWithFallback";
+import Link from "next/link";
+import Whisplay from "@/utils/appName";
 
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
   const router = useRouter();
   const {
     audioRef,
+    isBuffering,
     currentSong,
     setCurrentSong,
     playNext,
@@ -183,44 +187,50 @@ export default function PlayerPage({ onTogglePlaylist }) {
   useEffect(() => {
     if (!currentSong) return;
 
-    setMeta({
-      id: currentSong.id, // 🆔 required for key
-      title: currentSong.title,
-      artist: currentSong.artist,
-      album: currentSong.album,
-      cover: currentSong.cover,
-      url: currentSong.url,
-      format: currentSong.format,
-      bitrate: currentSong.bitrate,
-      sampleRate: currentSong.sampleRate,
-      bitDepth: currentSong.bitDepth,
-      qualityText: currentSong.qualityText,
-    });
+    const prevTime = useSongStore.getState().currentTime;
 
-    if (currentSong.theme) {
-      const t = currentSong.theme;
-      setTheme({
-        vibrant: t.vibrant || "#e91e63",
-        muted: t.muted || "#222",
-        darkMuted: t.darkMuted || "#111",
-        lightMuted: t.lightMuted || "#ccc",
-        darkVibrant: t.darkVibrant || "#000",
+    const transitionToNewSong = async () => {
+      await animateSeekReset(prevTime);
+      setMeta({
+        id: currentSong.id, // 🆔 required for key
+        title: currentSong.title,
+        artist: currentSong.artist,
+        album: currentSong.album,
+        cover: currentSong.cover,
+        url: currentSong.url,
+        format: currentSong.format,
+        bitrate: currentSong.bitrate,
+        sampleRate: currentSong.sampleRate,
+        bitDepth: currentSong.bitDepth,
+        qualityText: currentSong.qualityText,
       });
-    } else {
-      setTheme({
-        vibrant: "#ff4081",
-        muted: "#222",
-        darkMuted: "#111",
-        lightMuted: "#ccc",
-        darkVibrant: "#000",
-      });
-    }
 
-    setPlaying(true);
+      if (currentSong.theme) {
+        const t = currentSong.theme;
+        setTheme({
+          vibrant: t.vibrant || "#e91e63",
+          muted: t.muted || "#222",
+          darkMuted: t.darkMuted || "#111",
+          lightMuted: t.lightMuted || "#ccc",
+          darkVibrant: t.darkVibrant || "#000",
+        });
+      } else {
+        setTheme({
+          vibrant: "#ff4081",
+          muted: "#222",
+          darkMuted: "#111",
+          lightMuted: "#ccc",
+          darkVibrant: "#000",
+        });
+      }
 
-    if (currentSong.id !== id) {
-      router.replace(`/player/${currentSong.id}`);
-    }
+      setPlaying(true);
+
+      if (currentSong.id !== id) {
+        router.replace(`/player/${currentSong.id}`);
+      }
+    };
+    transitionToNewSong();
   }, [currentSong, id, router]);
 
   const togglePlay = () => {
@@ -248,6 +258,23 @@ export default function PlayerPage({ onTogglePlaylist }) {
     useSongStore.getState().seekTo(time);
   };
 
+  const animateSeekReset = async (fromTime = 0, duration = 300) => {
+    const totalFrames = Math.round((duration / 1000) * 60);
+    for (let i = 0; i <= totalFrames; i++) {
+      const progress = i / totalFrames;
+      const easedTime = fromTime * (1 - progress);
+
+      useSongStore.getState().setCurrentTime(easedTime);
+      useSongStore
+        .getState()
+        .setProgress((easedTime / useSongStore.getState().duration) * 100);
+
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+    useSongStore.getState().setCurrentTime(0);
+    useSongStore.getState().setProgress(0);
+  };
+
   /* const handleVolumeChange = (e) => {
     const vol = parseFloat(e.target.value);
     if (audioRef?.current) {
@@ -273,7 +300,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
   return (
     <div
-      className="min-h-[100dvh] overflow-hidden relative flex items-center justify-center md:rounded-3xl"
+      className="min-h-[100dvh] overflow-hidden relative flex items-start justify-center md:rounded-3xl"
       style={{ background: backgroundGradient }}
     >
       <div
@@ -283,20 +310,57 @@ export default function PlayerPage({ onTogglePlaylist }) {
       <div className="absolute inset-0 bg-black/50" />
 
       <div className="z-10 relative max-w-lg w-full bg-transparent flex flex-col items-center">
-        <div className="relative w-full md:h-[400px] h-[330px] mb-6 flex items-center justify-center">
+        <header
+          //className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-5xl px-6 py-3 rounded-full flex justify-between items-center backdrop-blur-md bg-black/30 border border-white/10 shadow-lg"
+          className="relative top-0 pt- left-1/2 transform -translate-x-1/2 z-20 w-[100%] max-w-5xl px-6 py-6 flex justify-between items-center bg-gradient-to-b from-black/30 to-transparent"
+          style={{ color: theme.lightMuted }}
+        >
+          <Link
+            href="/"
+            prefetch
+            className="flex items-center gap-1 text-sm hover:text-white transition font-medium"
+          >
+            <FaArrowLeft />
+          </Link>
+
+          <span className="tracking-wide text-sm sm:text-base font-semibold text-white/80">
+            <span
+              style={{
+                color: theme.vibrant,
+                fontWeight: 800,
+                letterSpacing: "0.1em",
+              }}
+            >
+              <Whisplay className={"text-2xl font-bold"} />
+            </span>
+          </span>
+
+          <div className="text-xs opacity-60">v1.0</div>
+        </header>
+
+        <div className="relative w-full md:h-[400px] h-[330px] mb- flex items-center justify-center">
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <motion.div
               className="overflow-hidden rounded-[inherit]"
               style={{
-                borderRadius: showCover ? 24 : 0,
+                borderRadius: showCover ? 14 : 0,
               }}
               animate={{
-                width: showCover ? 256 : 400,
-                height: showCover ? 256 : 400,
-                scale: showCover ? 1 + beatLevel * 0.06 : 1 + beatLevel * 0.0,
+                width:
+                  showCover || ["blob", "pulsewave", "rings"].includes(vizMode)
+                    ? 256
+                    : 400,
+                height:
+                  showCover || ["blob", "pulsewave", "rings"].includes(vizMode)
+                    ? 256
+                    : 330,
+                scale:
+                  showCover || ["blob", "pulsewave", "rings"].includes(vizMode)
+                    ? 1 + beatLevel * 0.001
+                    : 1 + beatLevel * 0.0,
               }}
               transition={{
-                type: "spring",
+                type: "keyframes",
                 stiffness: 100,
                 damping: 12,
               }}
@@ -320,16 +384,16 @@ export default function PlayerPage({ onTogglePlaylist }) {
               if (e.target.tagName !== "INPUT") setShowCover(!showCover);
             }}
             style={{
-              borderRadius: showCover ? 24 : 0,
+              borderRadius: showCover ? 14 : 0,
               aspectRatio: "1 / 1",
             }}
             animate={{
               width: showCover ? 256 : 400,
-              height: showCover ? 256 : 400,
-              scale: 1 + beatLevel * 0.06,
+              height: showCover ? 256 : 330,
+              scale: 1 + beatLevel * 0.001,
             }}
             transition={{
-              type: "spring",
+              type: "keyframes",
               stiffness: 100,
               damping: 12,
             }}
@@ -441,7 +505,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
         <section className="w-full  px-6">
           <div className="mt-6 w-full">
-            <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
+            {/* <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
               <div
                 className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
                 style={{
@@ -459,7 +523,46 @@ export default function PlayerPage({ onTogglePlaylist }) {
                 onChange={handleSeek}
                 className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
               />
+            </div> */}
+            <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
+              <div
+                className="buffering-seek-bar transition-opacity duration-300"
+                style={{
+                  opacity: !playing || isBuffering ? 1 : 0,
+                  pointerEvents: !playing || isBuffering ? "auto" : "none",
+                  left: `${progress}%`,
+                  width: `${(100 - progress) / 2}%`,
+                  background: `linear-gradient(to right, ${
+                    theme.vibrant + "33"
+                  }, ${theme.vibrant}75, ${theme.vibrant + "33"})`,
+                  borderRadius: "100px",
+                  borderTopLeftRadius: `${progress !== 0 ? "0" : "100px"}`,
+                  borderBottomLeftRadius: `${progress !== 0 ? "0" : "100px"}`,
+                }}
+              />
+
+              {/* ✅ Real progress bar */}
+              <div
+                className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
+                style={{
+                  width: `${progress}%`,
+                  backgroundColor: theme.vibrant,
+                }}
+              ></div>
+
+              {/* Seek input */}
+              <input
+                disabled={loading}
+                type="range"
+                min="0"
+                max={duration}
+                step="0.0001"
+                value={currentTime}
+                onChange={handleSeek}
+                className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+              />
             </div>
+
             <div
               className="flex justify-between text-xs mt-1"
               style={{ color: theme.lightMuted }}

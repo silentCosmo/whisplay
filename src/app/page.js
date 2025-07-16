@@ -172,7 +172,7 @@ export default function HomePage() {
         {/* Sections */}
         <Section title="Recently Played">
           <HorizontalCardScroll
-            items={recent}
+            items={recent.slice(0,10)}
             onClick={(song) => handleClick(song, "recently-played", recent)}
           />
         </Section>
@@ -232,7 +232,7 @@ export default function HomePage() {
             return (
               <Section key={title} title={title}>
                 <GridCard
-                  items={items.slice(0, 8)}
+                  items={items.slice(0, 10)}
                   onClick={(song) => handleClick(song, playlistId, items)}
                 />
               </Section>

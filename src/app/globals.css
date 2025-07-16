@@ -81,3 +81,27 @@ select option {
   background-color: #1a1a1c !important; /* Change to your desired color */
   /* Adjust text color for readability */
 }
+
+@keyframes loadingLoop {
+  0% {
+    transform: translateX(-50%);
+  }
+  50% {
+    transform: translateX(150%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+
+.buffering-seek-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;/* 
+  width: 20%; */
+  animation: loadingLoop 0.9s linear infinite alternate;
+  will-change: transform;
+  pointer-events: none;
+}
+

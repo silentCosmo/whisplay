@@ -15,6 +15,7 @@ export default function GlobalAudioProvider() {
     playNext,
     setDuration,
     setCurrentTime,
+    setIsBuffering
   } = useSongStore();
 
   useEffect(() => {
@@ -85,6 +86,31 @@ export default function GlobalAudioProvider() {
     }
   }, [playing]);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleWaiting = () => {
+      useSongStore.getState().setIsBuffering(true);
+      console.log("waiting");
+      
+    };
+    const handleCanPlay = () => {
+      useSongStore.getState().setIsBuffering(false);
+      console.log("can play");
+    };
+
+    audio.addEventListener("waiting", handleWaiting);
+    audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("canplaythrough", handleCanPlay);
+
+    return () => {
+      audio.removeEventListener("waiting", handleWaiting);
+      audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("canplaythrough", handleCanPlay);
+    };
+  }, [playing, currentSong]);
+
   return (
     <audio
       crossOrigin="anonymous"
@@ -110,7 +136,7 @@ export default function GlobalAudioProvider() {
         } /* else {
           setPlaying(false);
           } */
-         
+
         playNext();
 
         /* const {
