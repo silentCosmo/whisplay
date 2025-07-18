@@ -1,12 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPause, FaPlay, FaForward } from "react-icons/fa";
 import useSongStore from "@/lib/songStore";
 import ImageWithFallback from "@/lib/imageWithFallback";
 import Link from "next/link";
-//import audio from "@/lib/audio";
 
 export default function MiniPlayer() {
   const router = useRouter();
@@ -16,10 +15,7 @@ export default function MiniPlayer() {
   const handleImageError = () => {
     setIsImageError(true); // Flag when image fails to load
   };
-  //const { songs, currentSong, setCurrentSong } = useSongStore();
 
-  //const [playing, setPlaying] = useState(false);
-  //const [progress, setProgress] = useState(0);
   const {
     audioRef,
     currentSong,
@@ -29,7 +25,7 @@ export default function MiniPlayer() {
     togglePlay,
     progress,
   } = useSongStore();
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       if (audioRef && currentSong) {
@@ -43,9 +39,8 @@ export default function MiniPlayer() {
     return () => clearInterval(interval);
   }, [currentSong]);
 
-
   const handleNext = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent link navigation
     const index = songs.findIndex((s) => s.id === currentSong.id);
     const nextSong = songs[index + 1] || songs[0]; // Loop if end
     setCurrentSong(nextSong);
@@ -104,14 +99,10 @@ export default function MiniPlayer() {
           </div>
 
           {/* Player Body */}
-          {/* <div
-            className="flex items-center justify-between px-4 py-2 cursor-pointer"
-            onClick={() => router.push(`/player/${currentSong.id}`)}
-          > */}
           <div
             className="flex items-center justify-between px-4 py-2 cursor-pointer"
-            //onClick={() => router.push(`/player/${currentSong.id}`)}
           >
+            {/* Wrap only the song details with the Link */}
             <Link
               href={`/player/${currentSong.id}`}
               passHref
@@ -125,7 +116,6 @@ export default function MiniPlayer() {
                   width={48}
                   height={48}
                   className="rounded shadow object-cover"
-                  //onError={handleImageError}
                 />
                 <div className="flex-1 overflow-hidden">
                   <p className="text-sm font-semibold text-white truncate">
@@ -135,26 +125,31 @@ export default function MiniPlayer() {
                     {currentSong.artist}
                   </p>
                 </div>
-                <div className="flex gap-4 items-center z-10">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      togglePlay();
-                    }}
-                    className="text-white text-lg hover:scale-110 transition"
-                  >
-                    {playing ? <FaPause /> : <FaPlay />}
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    className="text-white text-lg hover:scale-110 transition"
-                  >
-                    <FaForward />
-                  </button>
-                </div>
               </div>
             </Link>
+            {/* Controls outside of Link */}
+            <div className="flex gap-4 items-center z-10">
+              {/* Play/Pause Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent link navigation
+                  togglePlay();
+                }}
+                className="text-white text-lg hover:scale-110 transition"
+              >
+                {playing ? <FaPause /> : <FaPlay />}
+              </button>
+
+              {/* Next Button */}
+              <button
+                onClick={handleNext}
+                className="text-white text-lg hover:scale-110 transition"
+              >
+                <FaForward />
+              </button>
+            </div>
           </div>
+
           {/* Progress Bar */}
           <div
             className="h- transition-all ease-in-out duration-300"

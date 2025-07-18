@@ -58,7 +58,7 @@ export default function LibraryDoorPage() {
 
   if (loading) {
     return (
-      <div className="p-6 text-white text-center">Loading {door}...</div>
+      <div className="p-6 text-white text-center flex items-center justify-center min-h-[93dvh]">Loading {door}...</div>
     );
   }
 
@@ -66,7 +66,7 @@ export default function LibraryDoorPage() {
     const grouped = groupSongsBy(door.slice(0, -1));
 
     return (
-      <div className="p-6 max-w-screen-xl mx-auto">
+      <div className="p-6 max-w-screen-xl mx-auto h-[93dvh] overflow-auto">
         <h1 className="text-2xl font-bold text-white mb-10 capitalize tracking-tight">
           {door === "artists" ? "Browse by Artist" : "Browse by Album"}
         </h1>

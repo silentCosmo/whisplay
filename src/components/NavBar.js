@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Search, Library, Settings } from "lucide-react";
 import { FaCog, FaHome, FaMusic, FaSearch, FaUser } from "react-icons/fa";
+import useSongStore from "@/lib/songStore";
 
 const navItems = [
   { href: "/", label: "Home", icon: <Home size={20} /> },
@@ -14,6 +15,10 @@ const navItems = [
 
 export default function NavBar() {
   const pathname = usePathname();
+  const {currentSong} = useSongStore()
+
+  const themeColor = currentSong?.theme?.vibrant || "#e91e63";
+  
 
   if(pathname.startsWith(`/player/`)){
     return
@@ -29,8 +34,9 @@ export default function NavBar() {
               key={href}
               href={href}
               className={`flex flex-col items-center text-xs transition ${
-                active ? "text-pink-400 font-bold scale-105" : "text-white/60"
+                active ? `text-[${themeColor}] font-bold scale-105` : "text-white/60"
               }`}
+              style={{color: active&&themeColor}}
             >
               <span className="text-lg mb-0.5">{icon}</span>
               {label}

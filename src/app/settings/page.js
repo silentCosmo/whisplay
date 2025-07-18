@@ -4,11 +4,17 @@ import { useState } from "react";
 import { Sun, Moon, Info, Trash2, Volume2 } from "lucide-react";
 import usePersistentState from "@/lib/usePersistentState";
 import { Moirai_One, Macondo, Eagle_Lake } from "next/font/google";
+import useSongStore from "@/lib/songStore";
+import Whisplay from "@/utils/appName";
+import { getThemeColor } from "@/utils/getThemeColor";
 
 export default function SettingsPage() {
   const [darkMode, setDarkMode] = usePersistentState("whisplay-theme", true);
   const [volume, setVolume] = usePersistentState("volume", 0.8);
   const [font, setFont] = usePersistentState("whisplay-font", "Quicksand");
+  const [theme, setTheme] = usePersistentState("theme", "dynamic");
+  const {currentSong} = useSongStore()
+  const themeColor = getThemeColor(currentSong);
   const [appName, setAppName] = usePersistentState(
     "whisplay-app-name",
     "Whisplay"
@@ -37,8 +43,12 @@ export default function SettingsPage() {
     }
   };
 
+  const handleThemeChange = (e) => {
+    setTheme(e.target.value);
+  };
+
   return (
-    <div className="max-w-screen-md h-[99dvh] overflow-auto mx-auto p-6 pb-32 space-y-8 text-white">
+    <div className="max-w-screen-md h-[93dvh] overflow-auto mx-auto p-6 space-y-4 text-white">
       <h1 className="text-3xl font-bold">Settings</h1>
 
       {/* Theme Section */}
@@ -57,6 +67,24 @@ export default function SettingsPage() {
         </div>
       </section> */}
 
+      {/* Theme Section */}
+      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-medium">Theme</h2>
+          </div>
+          <select
+            value={theme}
+            onChange={handleThemeChange}
+            className="px-4 py-1.5 text-sm bg-white/10 hover:bg-white/20 rounded-lg transition"
+          >
+            <option value="dynamic" defaultValue>Dynamic</option>
+            <option value="light" disabled>Light</option>
+            <option value="dark" disabled>Dark</option>
+          </select>
+        </div>
+      </section>
+
       {/* Playback Settings */}
       <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10">
         <div className="flex justify-between items-center">
@@ -72,6 +100,7 @@ export default function SettingsPage() {
             value={volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
             className="w-32 accent-pink-500"
+            style={{accentColor: themeColor}}
           />
         </div>
       </section>
@@ -131,10 +160,10 @@ export default function SettingsPage() {
       </section>
 
       {/* About */}
-      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10 mb-32">
+      <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10 ">
         <div className="flex items-center gap-3 mb-2">
           <Info size={20} />
-          <h2 className="text-lg font-medium">About Whisplay</h2>
+          <h2 className="text-lg font-medium text-white/90">About <span style={{color: themeColor}}><Whisplay/> </span></h2>
         </div>
         <p className="text-sm text-white/70 leading-relaxed">
           Whisplay is your cozy sound lounge — a minimal and elegant music

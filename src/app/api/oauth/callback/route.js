@@ -6,6 +6,8 @@ export async function GET(req) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
 
+  const cookieStore = await cookies();
+
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -15,7 +17,7 @@ export async function GET(req) {
   const { tokens } = await oauth2Client.getToken(code);
 
   // 🍪 Store access & refresh token in a secure cookie
-  cookies().set("google_access_token", tokens.access_token, {
+  cookieStore().set("google_access_token", tokens.access_token, {
     httpOnly: true,
     secure: true,
     sameSite: "Lax",
@@ -23,7 +25,7 @@ export async function GET(req) {
   });
 
   if (tokens.refresh_token) {
-    cookies().set("google_refresh_token", tokens.refresh_token, {
+    cookieStore().set("google_refresh_token", tokens.refresh_token, {
       httpOnly: true,
       secure: true,
       sameSite: "Lax",
@@ -31,7 +33,11 @@ export async function GET(req) {
     });
   }
 
-  return new Response("🎉 Login successful! You may close this window.", {
+
+  const redirectUrl = new URL('/sync', process.env.NEXT_PUBLIC_URL || 'http://localhost:3000');
+  return NextResponse.redirect(redirectUrl);
+
+  /* return new Response("🎉 Login successful! You may close this window.", {
     headers: { "Content-Type": "text/html" },
-  });
+  }); */
 }

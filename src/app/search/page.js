@@ -65,7 +65,7 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search songs, artists, albums..."
-          className="w-full bg-white/10 text-white px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-1 focus:ring-pink-500 placeholder:text-white/50"
+          className="w-full bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-rose-500 px-4 py-3 pr-10 rounded-lg placeholder:text-white/50"
         />
         <span className="absolute right-3 top-3 text-white/70 pointer-events-none">
           <Search size={20} />
