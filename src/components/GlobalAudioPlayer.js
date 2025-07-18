@@ -92,12 +92,10 @@ export default function GlobalAudioProvider() {
 
     const handleWaiting = () => {
       useSongStore.getState().setIsBuffering(true);
-      console.log("waiting");
       
     };
     const handleCanPlay = () => {
       useSongStore.getState().setIsBuffering(false);
-      console.log("can play");
     };
 
     audio.addEventListener("waiting", handleWaiting);

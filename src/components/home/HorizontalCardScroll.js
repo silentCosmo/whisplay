@@ -5,7 +5,6 @@ import { useState } from "react";
 
 export default function HorizontalCardScroll({ items, onClick }) {
   const [scrollText, setScrollText] = useState(false)
-  console.log('scrltxt', scrollText)
   return (
     <div className="flex overflow-x-auto space-x-5 px-2 pb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent snap-x snap-mandatory">
       {items.map((song) => (

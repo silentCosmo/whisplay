@@ -57,7 +57,7 @@ export default function SearchPage() {
 
   return (
     <div className="px-4 py-3 max-w-screen-lg mx-auto min-h-[100dvh]">
-      <h1 className="text-3xl font-bold text-white mb-6">Search</h1>
+      <h1 className="text-2xl font-bold text-white mb-6 mt-3">Search</h1>
 
       <div className="relative w-full max-w-md mb-8">
         <input
@@ -80,11 +80,11 @@ export default function SearchPage() {
 
       <section className=" h-[75dvh] max-w-full overflow-x-hidden overflow-auto">
         {!loading && results.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mb-32">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-32">
             {results.map((song) => (
               <motion.div
                 key={song.id}
-                onClick={() => onClick(song)}
+                onClick={() => handleClick(song)}
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
                 className="flex-shrink-0 snap-start w-44 rounded-2xl overflow-hidden relative cursor-pointer group bg-gradient-to-br from-[#1c1c1e] to-[#2c2c2e] shadow-md hover:shadow-xl transition-shadow duration-300"

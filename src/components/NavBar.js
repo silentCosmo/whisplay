@@ -25,6 +25,7 @@ export default function NavBar() {
           const active = pathname === href;
           return (
             <Link
+              prefetch={true}
               key={href}
               href={href}
               className={`flex flex-col items-center text-xs transition ${

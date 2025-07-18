@@ -44,8 +44,6 @@
 export async function generateMetadata({ params }) {
   const { id: lastPlayedId } = await params; // <-- await here!
 
-  console.log("lpid", lastPlayedId);
-
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/meta/${lastPlayedId}`);
   
   if (!res.ok) {
@@ -57,7 +55,6 @@ export async function generateMetadata({ params }) {
   }
   
   const song = await res.json();
-  console.log("resM",song);
   
 
   return {

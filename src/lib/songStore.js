@@ -25,6 +25,7 @@ const useSongStore = create(
       //playlists: {}, // { playlistId: [song1, song2, ...], ... }
       songs: [],
       queue: [],
+      queuedHistory: [],
       playlists: {},
       currentPlaylistId: null,
       currentSong: null,
@@ -55,9 +56,20 @@ const useSongStore = create(
         }));
         console.log("added to quee:", song);
       },
-      removeFromQueue: (id) => {
+      /* removeFromQueue: (id) => {
         const queue = get().queue.filter((s) => s.id !== id);
         set({ queue });
+      }, */
+      removeFromQueue: (id) => {
+        const songToRemove = get().queue.find((s) => s.id === id);
+        console.log("strm:", songToRemove);
+
+        if (songToRemove) {
+          set({
+            queuedHistory: [...get().queuedHistory, songToRemove],
+            queue: get().queue.filter((s) => s.id !== id),
+          });
+        }
       },
       clearQueue: () => set({ queue: [], queueIndex: 0 }),
 
@@ -247,16 +259,34 @@ const useSongStore = create(
     return;
   } */
 
+        console.log(
+          "Before next song: queueIndex:",
+          get().queueIndex,
+          "Queue:",
+          queue
+        );
+
         if (queue.length > 0) {
           const { queueIndex } = get();
           const nextFromQueue = queue[queueIndex];
           if (!nextFromQueue) {
             // No more queue, fallback to playlist or autoplay
             // ...
+            console.log("No song found in the queue.");
             return;
           }
-          set({ queueIndex: queueIndex + 1 });
+          console.log("Playing from queue:", nextFromQueue.title);
+          console.log(
+            "After next song: queueIndex:",
+            get().queueIndex,
+            "Queue:",
+            queue
+          );
+
           setCurrentSong(nextFromQueue);
+          get().removeFromQueue(nextFromQueue.id);
+
+          //set({ queueIndex: queueIndex + 1 });
           return;
         }
 
@@ -352,6 +382,14 @@ const useSongStore = create(
           const prevInQueue = queue[queueIndex - 2];
           set({ queueIndex: queueIndex - 1 });
           setCurrentSong(prevInQueue);
+          return;
+        }
+
+        if (get().queuedHistory.length > 0 && get().queue.length > 0) {
+          const prevInHistory =
+            get().queuedHistory[get().queuedHistory.length - 1];
+          setCurrentSong(prevInHistory);
+          set({ queuedHistory: get().queuedHistory.slice(0, -1) }); // Remove from history
           return;
         }
 

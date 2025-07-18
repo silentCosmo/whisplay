@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaPause, FaPlay, FaForward } from "react-icons/fa";
 import useSongStore from "@/lib/songStore";
 import ImageWithFallback from "@/lib/imageWithFallback";
+import Link from "next/link";
 //import audio from "@/lib/audio";
 
 export default function MiniPlayer() {
@@ -28,25 +29,7 @@ export default function MiniPlayer() {
     togglePlay,
     progress,
   } = useSongStore();
-
-  // ▶️ Autoplay on song change
-  // Autoplay only if song changed
-  /* useEffect(() => {
-  if (!audioRef.current || !currentSong?.url) return;
-
-  const audio = audioRef.current;
-
-  if (audio.src !== location.origin + currentSong.url) {
-    audio.src = currentSong.url;
-    audio.load();
-    audio
-      .play()
-      .then(() => setPlaying(true))
-      .catch(() => setPlaying(false));
-  }
-}, [currentSong]); */
-
-  // 🟩 Track progress
+  
   useEffect(() => {
     const interval = setInterval(() => {
       if (audioRef && currentSong) {
@@ -60,19 +43,7 @@ export default function MiniPlayer() {
     return () => clearInterval(interval);
   }, [currentSong]);
 
-  // ▶️⏸️ Toggle
-  /* onst togglePlay = () => {
-    if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
-    } else {
-      audioRef.current.play();
-      setPlaying(true);
-    }
-  }; */
 
-  // ⏭️ Skip to next
   const handleNext = (e) => {
     e.stopPropagation();
     const index = songs.findIndex((s) => s.id === currentSong.id);
@@ -81,10 +52,17 @@ export default function MiniPlayer() {
   };
 
   const themeColor = currentSong?.theme?.vibrant || "#e91e63";
-  const shouldShow = currentSong && (!pathname.startsWith("/player") && !pathname.startsWith("/sync"));
-  /* const shouldShow =
-    currentSong && !pathname.startsWith(`/player`); */
-    //currentSong && !pathname.startsWith(`/player/${currentSong.id}`);
+  const shouldShow =
+    currentSong &&
+    !pathname.startsWith("/player") &&
+    !pathname.startsWith("/sync") &&
+    !pathname.startsWith("/settings");
+
+  useEffect(() => {
+    if (currentSong?.id) {
+      router.prefetch(`/player/${currentSong.id}`);
+    }
+  }, [currentSong?.id]);
 
   return (
     <AnimatePresence>
@@ -95,27 +73,12 @@ export default function MiniPlayer() {
           exit={{ opacity: 0, y: 40 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
           className={`sticky bottom-[3.40rem] left-2 right-2 z-50 bg-black/80 backdrop-blur-lg rounded-t-xl shadow-xl overflow-hidden`}
-          style={{borderTopColor:`${themeColor}33`, borderWidth: "0px", borderTopWidth: !playing ?"3px":"0"} }
+          style={{
+            borderTopColor: `${themeColor}33`,
+            borderWidth: "0px",
+            borderTopWidth: !playing ? "3px" : "0",
+          }}
         >
-          {/* <audio ref={audioRef} preload="auto" /> */}
-          {/* Progress Bar */}
-          {/* <div
-            className="h-[0.2rem]"
-            style={{
-              background: `${themeColor}33`,
-              position: "relative",
-            }}
-          >
-            <div
-              className="h-full"
-              style={{
-                width: `${progress}%`,
-                background: themeColor,
-                transition: "width 0.2s ease",
-              }}
-            />
-          </div> */}
-
           <div
             className="transition-all ease-in-out duration-300 w-full absolute top-0 left-0 animate-neon-line"
             style={{
@@ -123,57 +86,74 @@ export default function MiniPlayer() {
               position: "absolute",
               top: 0,
               animation: playing ? "none" : "neon-line 4s linear infinite",
-              height: !playing? "0.05rem":"0rem",
+              height: !playing ? "0.05rem" : "0rem",
             }}
           >
-            { !playing &&
-            <div className="h-full bg-gradient-to-r animate-neon-bar" style={{
-                background: themeColor,
-                animation: playing ? "none" :  "neon-bar 10s ease-in-out infinite",
-                opacity: 0.3,
-              }} />}
+            {!playing && (
+              <div
+                className="h-full bg-gradient-to-r animate-neon-bar"
+                style={{
+                  background: themeColor,
+                  animation: playing
+                    ? "none"
+                    : "neon-bar 10s ease-in-out infinite",
+                  opacity: 0.3,
+                }}
+              />
+            )}
           </div>
 
           {/* Player Body */}
-          <div
+          {/* <div
             className="flex items-center justify-between px-4 py-2 cursor-pointer"
             onClick={() => router.push(`/player/${currentSong.id}`)}
+          > */}
+          <div
+            className="flex items-center justify-between px-4 py-2 cursor-pointer"
+            //onClick={() => router.push(`/player/${currentSong.id}`)}
           >
-            <div className="flex items-center gap-3 w-full">
-              <ImageWithFallback
-                src={currentSong.cover}
-                alt={currentSong.title}
-                width={48}
-                height={48}
-                className="rounded shadow object-cover"
-                //onError={handleImageError}
-              />
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-semibold text-white truncate">
-                  {currentSong.title}
-                </p>
-                <p className="text-xs text-white/60 truncate">
-                  {currentSong.artist}
-                </p>
+            <Link
+              href={`/player/${currentSong.id}`}
+              passHref
+              prefetch
+              className="w-full"
+            >
+              <div className="flex items-center gap-3 w-full">
+                <ImageWithFallback
+                  src={currentSong.cover}
+                  alt={currentSong.title}
+                  width={48}
+                  height={48}
+                  className="rounded shadow object-cover"
+                  //onError={handleImageError}
+                />
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-sm font-semibold text-white truncate">
+                    {currentSong.title}
+                  </p>
+                  <p className="text-xs text-white/60 truncate">
+                    {currentSong.artist}
+                  </p>
+                </div>
+                <div className="flex gap-4 items-center z-10">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePlay();
+                    }}
+                    className="text-white text-lg hover:scale-110 transition"
+                  >
+                    {playing ? <FaPause /> : <FaPlay />}
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="text-white text-lg hover:scale-110 transition"
+                  >
+                    <FaForward />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-4 items-center z-10">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePlay();
-                  }}
-                  className="text-white text-lg hover:scale-110 transition"
-                >
-                  {playing ? <FaPause /> : <FaPlay />}
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="text-white text-lg hover:scale-110 transition"
-                >
-                  <FaForward />
-                </button>
-              </div>
-            </div>
+            </Link>
           </div>
           {/* Progress Bar */}
           <div
@@ -181,7 +161,7 @@ export default function MiniPlayer() {
             style={{
               background: `${themeColor}33`,
               position: "relative",
-              height: playing? "0.25rem":"0",
+              height: playing ? "0.25rem" : "0",
             }}
           >
             <div
