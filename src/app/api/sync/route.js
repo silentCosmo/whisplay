@@ -34,45 +34,45 @@ export async function GET(req) {
 
         const allCookies = await getCookies(); // ✅ await here
 
-        console.log("ak",allCookies);
-        
+        console.log("ak", allCookies);
 
-  const accessToken = allCookies.get("google_access_token")?.value;
-  const refreshToken = allCookies.get("google_refresh_token")?.value;
+        const accessToken = allCookies.get("google_access_token")?.value;
+        const refreshToken = allCookies.get("google_refresh_token")?.value;
 
         if (!accessToken) {
-  return new Response("❌ Not authorized. Please login first.", { status: 401 });
-}
+          return new Response("❌ Not authorized. Please login first.", {
+            status: 401,
+          });
+        }
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
+        const oauth2Client = new google.auth.OAuth2(
+          process.env.GOOGLE_CLIENT_ID,
+          process.env.GOOGLE_CLIENT_SECRET,
+          process.env.GOOGLE_REDIRECT_URI
+        );
 
-oauth2Client.setCredentials({
-  access_token: accessToken,
-  refresh_token: refreshToken,
-});
+        oauth2Client.setCredentials({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
 
-// (Optional) refresh token handling
-oauth2Client.on("tokens", async (tokens) => {
-  const cookieStore = await getCookies();
-  if (tokens.access_token) {
-    cookieStore.set("google_access_token", tokens.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "Lax",
-      maxAge: 60 * 60 * 24, // 1 day
-    });
-  }
-});
-
+        // (Optional) refresh token handling
+        oauth2Client.on("tokens", async (tokens) => {
+          const cookieStore = await getCookies();
+          if (tokens.access_token) {
+            cookieStore.set("google_access_token", tokens.access_token, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "Lax",
+              maxAge: 60 * 60 * 24, // 1 day
+            });
+          }
+        });
 
         const drive = google.drive({ version: "v3", auth: oauth2Client });
 
         const list = await drive.files.list({
-          q: "mimeType contains 'audio/'",
+          q: "mimeType contains 'audio/' and trashed = false",
           fields: "files(id, name, mimeType)",
         });
 
@@ -89,11 +89,23 @@ oauth2Client.on("tokens", async (tokens) => {
           const file = files[index];
           const { id: fileId, name: fileName, mimeType } = file;
 
-          const progressInfo = `🎼 Syncing ${index + 1} of ${files.length}: ${fileName}`;
+          try {
+            await drive.files.get({ fileId });
+          } catch (err) {
+            if (err.code === 404) {
+              // If file is not found (trashed or deleted), remove it from DB
+              await songsCollection.deleteOne({ id: fileId });
+              send(`❌ File deleted from Drive: ${fileName}. Removed from DB.`);
+              continue; // Skip this file and move to the next one
+            }
+          }
+
+          const progressInfo = `🎼 Syncing ${index + 1} of ${
+            files.length
+          }: ${fileName}`;
           send(progressInfo);
 
           const exists = await songsCollection.findOne({ id: fileId });
-
 
           if (exists && force && exists.cover) {
             const coverMatch = exists.cover.match(/id=([a-zA-Z0-9_-]+)/);
@@ -137,7 +149,6 @@ oauth2Client.on("tokens", async (tokens) => {
             let duration = 0;
             let theme = null;
 
-
             const meta = await parseBuffer(buffer, mimeType);
             title = meta.common.title || title;
             artist = meta.common.artist || artist;
@@ -170,7 +181,7 @@ oauth2Client.on("tokens", async (tokens) => {
               const imageBuffer = Buffer.from(pic.data);
               const imageStream = Readable.from(imageBuffer);
 
-              const { data: uploaded } = await drive.files.create({
+              /* const { data: uploaded } = await drive.files.create({
                 requestBody: {
                   name: `${fileId}_cover.jpg`,
                   mimeType: pic.format || "image/jpeg",
@@ -180,9 +191,43 @@ oauth2Client.on("tokens", async (tokens) => {
                   mimeType: pic.format || "image/jpeg",
                   body: imageStream,
                 },
+              }); 
+
+              cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;*/
+
+              
+
+              function sanitizeFilename(filename) {
+                // Remove special characters that are not allowed in file names
+                return filename.replace(/[^a-zA-Z0-9-_ ]/g, "_"); // Keep spaces and letters/numbers
+              }
+
+              function removeExtension(filename) {
+                // Remove file extension, leaving just the song name (e.g., "song.flac" -> "song")
+                return filename.replace(/\.[^/.]+$/, ""); // Remove the last period and any characters following it (extension)
+              }
+
+              const sanitizedSongName = sanitizeFilename(
+                removeExtension(fileName)
+              ); // Remove the extension first, then sanitize
+              const albumArtFilename = `${sanitizedSongName}_cover.jpg`; // Add the "_cover" suffix
+
+              const { data: uploaded } = await drive.files.create({
+                requestBody: {
+                  name: albumArtFilename, // Use the sanitized song name as the filename (e.g. "skyfall_cover.jpg")
+                  mimeType: pic.format || "image/jpeg",
+                  parents: [process.env.GOOGLE_DRIVE_COVER_FOLDER],
+                },
+                media: {
+                  mimeType: pic.format || "image/jpeg",
+                  body: imageStream,
+                },
               });
 
-              cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;
+              cover = {
+                url: `https://drive.google.com/uc?export=view&id=${uploaded.id}`,
+                fileId: uploaded.id,
+              };
               send(`✅ Cover uploaded: ${uploaded.id}`);
 
               send(`🎨 Extracting color palette...`);
@@ -199,7 +244,9 @@ oauth2Client.on("tokens", async (tokens) => {
             } else {
               // 💡 No cover available – mark it explicitly so we skip later
               theme = false;
-              send(`🎨 No cover found: ${fileName} (theme skipped theme generation)`);
+              send(
+                `🎨 No cover found: ${fileName} (theme skipped theme generation)`
+              );
             }
 
             let lyrics_snippet = null;
@@ -216,12 +263,12 @@ oauth2Client.on("tokens", async (tokens) => {
             let genre = meta.common.genre?.[0] || null;
             let year = meta.common.year?.toString() || null;
             let coverFilename = `${fileId}_cover.jpg`;
-            
-            if(!bpm){
+
+            if (!bpm) {
               send(`📐 BPM Detection Failed!`);
-            }else{
-                send(`📐 BPM Detected: ${bpm} — Tagging mood accordingly...`);
-              }
+            } else {
+              send(`📐 BPM Detected: ${bpm} — Tagging mood accordingly...`);
+            }
             send(`🧠 Generating tags...`);
             const tags = autoTags({
               title,

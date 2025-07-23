@@ -82,7 +82,7 @@ export default function SyncStatus() {
           onClick={startSync}
           className={`px-5 py-2.5 rounded-md font-semibold transition-all duration-200 shadow ${
             syncing
-              ? "bg-gray-700 cursor-not-allowed"
+              ? "bg-neutral-800 cursor-not-allowed animate-pulse"
               : "bg-pink-600 hover:bg-pink-500 hover:scale-105"
           } text-white`}
           disabled={syncing}
@@ -97,12 +97,13 @@ export default function SyncStatus() {
           )}
         </button>
 
-        <GoogleLoginButton />
+        <GoogleLoginButton syncing={syncing} />
 
         <label className="flex items-center gap-2 text-sm text-pink-400">
           <input
             type="checkbox"
             checked={force}
+            style={{cursor: syncing && "wait"}}
             onChange={(e) => {
               if (e.target.checked) {
                 const pass = prompt(

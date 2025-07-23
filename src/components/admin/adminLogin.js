@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export default function GoogleLoginButton() {
+export default function GoogleLoginButton({syncing}) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -33,6 +33,8 @@ export default function GoogleLoginButton() {
     <button
       onClick={handleLogout}
       className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 font-sm"
+      disabled={syncing}
+      style={{cursor: syncing && "wait"}}
     >
       Logout
     </button>
@@ -40,6 +42,7 @@ export default function GoogleLoginButton() {
     <button
       onClick={handleLogin}
       className="px-4 py-2 rounded bg-cyan-700 text-white hover:bg-cyan-600 font-medium"
+      disabled={syncing}
     >
       Login
     </button>
