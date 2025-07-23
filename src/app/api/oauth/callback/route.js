@@ -38,7 +38,7 @@ export async function GET(req) {
 
   const redirectUrl = new URL(
     "/sync",
-    process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
   );
 
   return NextResponse.redirect(redirectUrl);
