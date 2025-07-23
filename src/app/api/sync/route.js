@@ -56,8 +56,8 @@ oauth2Client.setCredentials({
 });
 
 // (Optional) refresh token handling
-oauth2Client.on("tokens", (tokens) => {
-  const cookieStore = cookies();
+oauth2Client.on("tokens", async (tokens) => {
+  const cookieStore = await getCookies();
   if (tokens.access_token) {
     cookieStore.set("google_access_token", tokens.access_token, {
       httpOnly: true,

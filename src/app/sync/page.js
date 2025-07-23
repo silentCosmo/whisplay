@@ -80,7 +80,7 @@ export default function SyncStatus() {
       <div className="flex items-center justify-between">
         <button
           onClick={startSync}
-          className={`px-5 py-2.5 rounded-full font-semibold transition-all duration-200 shadow ${
+          className={`px-5 py-2.5 rounded-md font-semibold transition-all duration-200 shadow ${
             syncing
               ? "bg-gray-700 cursor-not-allowed"
               : "bg-pink-600 hover:bg-pink-500 hover:scale-105"

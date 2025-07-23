@@ -67,6 +67,7 @@ export default function SettingsPage() {
         </div>
       </section> */}
 
+
       {/* Theme Section */}
       <section className="bg-white/5 backdrop-blur-lg p-5 rounded-xl shadow border border-white/10">
         <div className="flex justify-between items-center">

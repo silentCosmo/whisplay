@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import useSongStore from "@/lib/songStore";
 import PlaylistGrid from "@/components/library/PlaylistGrid";
+import LibraryStats from "@/components/LibraryStatus";
 
 export default function Library() {
   const [songs, setSongs] = useState([]);
@@ -65,6 +66,8 @@ export default function Library() {
   return (
     <div className="p-6 space-y-8 min-h-[85dvh]">
       <h2 className="text-xl font-semibold text-white mb-6">Your Library</h2>
+
+      <LibraryStats/>
 
       {/* Doors Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-5">
