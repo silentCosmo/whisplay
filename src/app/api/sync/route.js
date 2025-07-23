@@ -195,7 +195,7 @@ export async function GET(req) {
 
               cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;*/
 
-              
+
 
               function sanitizeFilename(filename) {
                 // Remove special characters that are not allowed in file names
@@ -224,10 +224,7 @@ export async function GET(req) {
                 },
               });
 
-              cover = {
-                url: `https://drive.google.com/uc?export=view&id=${uploaded.id}`,
-                fileId: uploaded.id,
-              };
+              cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`
               send(`✅ Cover uploaded: ${uploaded.id}`);
 
               send(`🎨 Extracting color palette...`);
