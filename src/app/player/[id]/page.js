@@ -30,6 +30,7 @@ import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
 import ImageWithFallback from "@/lib/imageWithFallback";
 import Link from "next/link";
 import Whisplay from "@/utils/appName";
+import { getThemeColor } from "@/utils/getThemeColor";
 
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
@@ -338,7 +339,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
           <div className="text-xs opacity-60">v1.0</div>
         </header>
 
-        <div className="relative w-full md:h-[400px] h-[330px] mb- flex items-center justify-center">
+        <div className="relative w-full md:h-[400px] h-[330px] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <motion.div
               className="overflow-hidden rounded-[inherit]"
@@ -528,7 +529,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
               <div
                 className="buffering-seek-bar transition-opacity duration-300"
                 style={{
-                  opacity: !playing || isBuffering ? 1 : 0,
+                  opacity: /* !playing || */ isBuffering ? 1 : 0,
                   pointerEvents: !playing || isBuffering ? "auto" : "none",
                   left: `${progress}%`,
                   width: `${(100 - progress) / 2}%`,

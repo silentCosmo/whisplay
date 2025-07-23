@@ -9,7 +9,7 @@ export default function SyncStatus() {
   const [syncing, setSyncing] = useState(false);
   const [force, setForce] = useState(false);
   const [currentSongInfo, setCurrentSongInfo] = useState(""); // For mini display
-
+  const [reconnecting, setReconnecting] = useState(false); // New state for reconnecting status
   const logRef = useRef(null);
 
   const startSync = () => {
@@ -17,10 +17,9 @@ export default function SyncStatus() {
     setLogs([]);
     setSyncing(true);
     setCurrentSongInfo("");
+    setReconnecting(false); // Reset reconnecting status
 
-    const eventSource = new EventSource(
-      `/api/sync${force ? "?force=true" : ""}`
-    );
+    const eventSource = new EventSource(`/api/sync${force ? "?force=true" : ""}`);
 
     eventSource.onmessage = (e) => {
       const data = e.data;
@@ -52,6 +51,7 @@ export default function SyncStatus() {
     eventSource.onerror = (err) => {
       console.error("❌ Sync error", err);
       setLogs((prev) => [...prev, "❌ Sync error: Connection lost."]);
+      setReconnecting(true); // Set reconnecting status
       eventSource.close();
       setSyncing(false);
       setCurrentSongInfo("");
@@ -103,7 +103,7 @@ export default function SyncStatus() {
           <input
             type="checkbox"
             checked={force}
-            style={{cursor: syncing && "wait"}}
+            style={{ cursor: syncing && "wait" }}
             onChange={(e) => {
               if (e.target.checked) {
                 const pass = prompt(
@@ -149,6 +149,14 @@ export default function SyncStatus() {
       {currentSongInfo && (
         <div className="text-xs text-pink-400 bg-pink-800/10 border border-pink-500/50 px-3 py-2 rounded transition-all duration-300">
           <span className="text-pink-300">🎼</span> {currentSongInfo}
+        </div>
+      )}
+
+      {/* Reconnecting Notice */}
+      {reconnecting && (
+        <div className="text-sm text-red-400">
+          <ImSpinner3 size={18} className="animate-spin inline-block" />{" "}
+          Reconnecting...
         </div>
       )}
     </div>

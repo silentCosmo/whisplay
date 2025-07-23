@@ -32,7 +32,7 @@ export default function VisualizerCanvas({
       audioRef._sourceNode.connect(analyser);
     } catch (err) {}
 
-    analyser.fftSize = 256;
+    analyser.fftSize = 512;
     analyser.smoothingTimeConstant = 0.8;
 
     const bufferLength = analyser.frequencyBinCount;
@@ -43,8 +43,8 @@ export default function VisualizerCanvas({
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = 50;
-    const barGap = 0.25;
+    const radius = 0;
+    const barGap = 0;
 
     let animationId;
 
@@ -56,7 +56,7 @@ export default function VisualizerCanvas({
       const avg = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
       if (onBeat) onBeat(avg);
 
-      const barWidth = (canvas.width / bufferLength) * 1.5;
+      const barWidth = (canvas.width / bufferLength) * 2;
 
       switch (mode) {
         case "mirror": {
@@ -73,7 +73,7 @@ export default function VisualizerCanvas({
         }
 
         case "blob": {
-          const pulseRadius = radius + avg * 0.4;
+          const pulseRadius = radius + avg * 0.35;
           const points = 64;
           ctx.beginPath();
           for (let i = 0; i <= points; i++) {
@@ -85,7 +85,7 @@ export default function VisualizerCanvas({
             else ctx.lineTo(x, y);
           }
           ctx.closePath();
-          ctx.fillStyle = `${theme.vibrant}22`;
+          ctx.fillStyle = `${theme.vibrant}50`;
           ctx.strokeStyle = theme.vibrant;
           ctx.lineWidth = 2;
           ctx.fill();
@@ -163,7 +163,7 @@ export default function VisualizerCanvas({
             else ctx.lineTo(x, y);
           }
           ctx.strokeStyle = theme.vibrant;
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 1;
           ctx.stroke();
           break;
         }
@@ -178,7 +178,7 @@ export default function VisualizerCanvas({
         }
 
         case "rings": {
-          const rings = 3;
+          const rings = 5;
           for (let i = 0; i < rings; i++) {
             const pulse = radius + avg * 0.2 * (i + 1);
             ctx.beginPath();
@@ -223,7 +223,7 @@ export default function VisualizerCanvas({
             const value = dataArray[i];
             const h = value * 0.7;
 
-            const r = barWidth / 2;
+            const r = barWidth / 10;
             const y = canvas.height - h;
 
             ctx.beginPath();
@@ -263,8 +263,8 @@ export default function VisualizerCanvas({
         maxWidth: "100%",
         maxHeight: "100%",
         aspectRatio: "1 / 1",
-        opacity: 0.4,
-        mixBlendMode: "screen",
+        opacity: 0.5,
+        mixBlendMode: "multiply",
       }}
     />
   );
