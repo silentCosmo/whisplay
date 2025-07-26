@@ -32,12 +32,20 @@ export const metadata = {
   }
 };
 
+export const viewport = {
+  themeColor: [
+  { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+  { media: "(prefers-color-scheme: dark)", color: "#000000" },
+],
+}
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
         className={`${quickSand.className}  antialiased bg-[red] overflow-hidden`}
       >
+         <div className="status-bar-spacer" />
         <main className="max-w-4xl mx-auto md:p-6 pb-10">{children}</main>
 
         <div id="animation-root" className="fixed inset-0 pointer-events-none z-[10]" />

@@ -10,6 +10,7 @@ import Section from "@/components/home/Section";
 import HorizontalCardScroll from "@/components/home/HorizontalCardScroll";
 import GridCard from "@/components/home/GridCard";
 import ImageWithFallback from "@/lib/imageWithFallback";
+import AppInstallPrompt from "@/components/AppInstallPrompt";
 
 const moods = [
   { title: "Chill & Night", tags: ["chill", "focus", "night"] },
@@ -152,6 +153,7 @@ export default function HomePage() {
   return (
     <div>
       <Header />
+      <AppInstallPrompt/>
       <div className="px-6 py-20 mb-10 space-y-12 overflow-auto h-[93dvh]">
         {/* Hero */}
         {featured[0] && (

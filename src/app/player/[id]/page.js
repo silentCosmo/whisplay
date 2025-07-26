@@ -339,22 +339,22 @@ export default function PlayerPage({ onTogglePlaylist }) {
           <div className="text-xs opacity-60">v1.0</div>
         </header>
 
-        <div className="relative w-full md:h-[400px] h-[330px] flex items-center justify-center overflow-hidden">
+        <div className="relative w-full md:h-[400px] h-[400px] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <motion.div
               className="overflow-hidden rounded-[inherit]"
               style={{
-                borderRadius: showCover ? 14 : 0,
+                borderRadius: showCover ? 10 : 0,
               }}
               animate={{
                 width:
                   showCover || ["blob", "pulsewave", "rings"].includes(vizMode)
-                    ? 256
+                    ? 320
                     : 400,
                 height:
                   showCover || ["blob", "pulsewave", "rings"].includes(vizMode)
-                    ? 256
-                    : 330,
+                    ? 320
+                    : 400,
                 scale:
                   showCover || ["blob", "pulsewave", "rings"].includes(vizMode)
                     ? 1 + beatLevel * 0.001
@@ -385,12 +385,12 @@ export default function PlayerPage({ onTogglePlaylist }) {
               if (e.target.tagName !== "INPUT") setShowCover(!showCover);
             }}
             style={{
-              borderRadius: showCover ? 14 : 0,
+              borderRadius: showCover ? 10 : 0,
               aspectRatio: "1 / 1",
             }}
             animate={{
-              width: showCover ? 256 : 400,
-              height: showCover ? 256 : 330,
+              width: showCover ? 320 : 400,
+              height: showCover ? 320 : 400,
               scale: 1 + beatLevel * 0.001,
             }}
             transition={{
@@ -421,7 +421,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
                         playing && !loading
                           ? "brightness(0.5)"
                           : "brightness(0.8)",
-                          transition: "filter 0.5s ease-in-out",
+                      transition: "filter 0.5s ease-in-out",
                     }}
                     //onClick={toggleMode}
                   />
@@ -431,83 +431,84 @@ export default function PlayerPage({ onTogglePlaylist }) {
           </motion.div>
         </div>
 
-        <div
-          className="mt-4 flex gap-3 items-center justify-center text-xs relative"
-          style={{ color: theme.lightMuted }}
-        >
-          <button
-            disabled={!vizReady}
-            onClick={() => {
-              toggleMode();
-              setShowModeName(true);
-            }}
-            className={`p-3 rounded-2xl transition text-xl active:scale-50
+        <div className="w-full fixed bottom-0">
+          <div
+            className="mt-4 flex gap-3 items-center justify-center text-xs relative"
+            style={{ color: theme.lightMuted }}
+          >
+            <button
+              disabled={!vizReady}
+              onClick={() => {
+                toggleMode();
+                setShowModeName(true);
+              }}
+              className={`p-3 rounded-2xl transition text-xl active:scale-50
       ${
         vizReady
           ? "rbg-black/20 ractive:bg-black/5"
           : "bg-white/5 animate-pulse cursor-not-allowed"
       }`}
-          >
-            {vizReady ? (
-              modeIcons[vizMode]
-            ) : (
-              <FaCircleNotch className="animate-spin" />
-            )}
-          </button>
+            >
+              {vizReady ? (
+                modeIcons[vizMode]
+              ) : (
+                <FaCircleNotch className="animate-spin" />
+              )}
+            </button>
 
-          <AnimatePresence>
-            {showModeName && (
-              <motion.div
-                key="mode-name"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0 }}
-                transition={{ duration: 0.3 }}
-                className="absolute -top-10 px-4 py-2 rounded-xl text-sm text-white/50 pointer-events-none"
+            <AnimatePresence>
+              {showModeName && (
+                <motion.div
+                  key="mode-name"
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute -top-10 px-4 py-2 rounded-xl text-sm text-white/50 pointer-events-none"
+                >
+                  {vizMode}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="w-full overflow-hidden">
+            <div className="relative whitespace-nowrap">
+              <div
+                className="text-2xl font-bold text-center mx-auto w-max transition-all"
+                style={{
+                  color: theme.lightMuted,
+                  animation:
+                    meta.title.length > 30
+                      ? "scroll-text 15s linear infinite"
+                      : "none",
+                }}
               >
-                {vizMode}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="w-full overflow-hidden">
-          <div className="relative whitespace-nowrap">
-            <div
-              className="text-2xl font-bold text-center mx-auto w-max transition-all"
-              style={{
-                color: theme.lightMuted,
-                animation:
-                  meta.title.length > 30
-                    ? "scroll-text 15s linear infinite"
-                    : "none",
-              }}
-            >
-              {meta.title}
+                {meta.title}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="w-full overflow-hidden mt-1">
-          <div className="relative whitespace-nowrap">
-            <div
-              className="text-sm text-center mx-auto w-max transition-all"
-              style={{
-                color: theme.lightMuted,
-                animation:
-                  meta.artist.length > 30
-                    ? "scroll-text 10s linear infinite"
-                    : "none",
-              }}
-            >
-              {meta.artist}
+          <div className="w-full overflow-hidden mt-1">
+            <div className="relative whitespace-nowrap">
+              <div
+                className="text-sm text-center mx-auto w-max transition-all"
+                style={{
+                  color: theme.lightMuted,
+                  animation:
+                    meta.artist.length > 30
+                      ? "scroll-text 10s linear infinite"
+                      : "none",
+                }}
+              >
+                {meta.artist}
+              </div>
             </div>
           </div>
-        </div>
 
-        <section className="w-full  px-6">
-          <div className="mt-6 w-full">
-            {/* <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
+          <section className="w-full  px-6">
+            <div className="mt-6 w-full">
+              {/* <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
               <div
                 className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
                 style={{
@@ -526,186 +527,196 @@ export default function PlayerPage({ onTogglePlaylist }) {
                 className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
               />
             </div> */}
-            <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
-              <div
-                className="buffering-seek-bar transition-opacity duration-300"
-                style={{
-                  opacity: /* !playing || */ isBuffering ? 1 : 0,
-                  pointerEvents: !playing || isBuffering ? "auto" : "none",
-                  left: `${progress}%`,
-                  width: `${(100 - progress) / 2}%`,
-                  background: `linear-gradient(to right, ${
-                    theme.vibrant + "33"
-                  }, ${theme.vibrant}75, ${theme.vibrant + "33"})`,
-                  borderRadius: "100px",
-                  borderTopLeftRadius: `${progress !== 0 ? "0" : "100px"}`,
-                  borderBottomLeftRadius: `${progress !== 0 ? "0" : "100px"}`,
-                }}
-              />
-
-              {/* ✅ Real progress bar */}
-              <div
-                className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
-                style={{
-                  width: `${progress}%`,
-                  backgroundColor: theme.vibrant,
-                }}
-              ></div>
-
-              {/* Seek input */}
-              <input
-                disabled={loading}
-                type="range"
-                min="0"
-                max={duration}
-                step="0.0001"
-                value={currentTime}
-                onChange={handleSeek}
-                className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-              />
-            </div>
-
-            <div
-              className="flex justify-between text-xs mt-1"
-              style={{ color: theme.lightMuted }}
-            >
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
-
-          {meta.qualityText && (
-            <div className="w-full overflow-hidden mt-1">
-              <div className="relative whitespace-nowrap">
+              <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
                 <div
-                  className="text-xs text-center mx-auto w-max font-mono tracking-wide opacity-80"
+                  className="buffering-seek-bar transition-opacity duration-300"
                   style={{
-                    color: theme.lightMuted,
-                    animation:
-                      meta.qualityText.length > 40
-                        ? "scroll-text 12s linear infinite"
-                        : "none",
+                    opacity: /* !playing || */ isBuffering ? 1 : 0,
+                    pointerEvents: !playing || isBuffering ? "auto" : "none",
+                    left: `${progress}%`,
+                    width: `${(100 - progress) / 2}%`,
+                    background: `linear-gradient(to right, ${
+                      theme.vibrant + "33"
+                    }, ${theme.vibrant}75, ${theme.vibrant + "33"})`,
+                    borderRadius: "100px",
+                    borderTopLeftRadius: `${progress !== 0 ? "0" : "100px"}`,
+                    borderBottomLeftRadius: `${progress !== 0 ? "0" : "100px"}`,
                   }}
-                >
-                  {meta.qualityText}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Controls */}
-          <div className="flex justify-center items-center gap-8 mt-8">
-            <button
-              onClick={playPrevious}
-              className="text-2xl hover:scale-110 transition opacity-80"
-              style={{ color: theme.vibrant }}
-            >
-              <FaStepBackward />
-            </button>
-
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              className={`rounded-full shadow-lg ${
-                loading ? "animate-spi p-1" : "p-4"
-              }`}
-              style={{
-                backgroundColor: theme.vibrant,
-                color: theme.darkVibrant,
-                boxShadow: `0 0 20px ${theme.vibrant}80`,
-              }}
-              onClick={togglePlay}
-            >
-              {loading ? (
-                <FaCompactDisc
-                  className="animate-spin"
-                  size={40}
-                  style={{ color: theme.darkVibrant }}
                 />
-              ) : playing ? (
-                <FaPause />
-              ) : (
-                <FaPlay />
-              )}
-            </motion.button>
 
-            <button
-              onClick={playNext}
-              className="text-2xl hover:scale-110 transition opacity-80"
-              style={{ color: theme.vibrant }}
-            >
-              <FaStepForward />
-            </button>
-          </div>
-
-          {/* Volume Control */}
-          <div className="w-full mt-6 px-4">
-            <div className="flex items-center gap-3">
-              <button
-                className="text-lg hover:scale-110 transition"
-                onClick={toggleMute}
-                style={{ color: theme.lightMuted }}
-              >
-                {getVolumeIcon()}
-              </button>
-
-              <div
-                className="relative w-10/12 h-3 rounded-full bg-black/2/*  */0 group overflow-hidden cursor-pointer"
-                onMouseEnter={() => setHovering(true)}
-                onMouseLeave={() => setHovering(false)}
-                onTouchStart={() => setHovering(true)}
-                onTouchEnd={() => setHovering(false)}
-              >
-                {/* Filled Volume */}
+                {/* ✅ Real progress bar */}
                 <div
-                  className="absolute top-0 left-0 h-full rounded-full transition-all"
+                  className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
                   style={{
-                    width: `${(muted ? 0 : volume) * 100}%`,
+                    width: `${progress}%`,
                     backgroundColor: theme.vibrant,
-                    boxShadow: `0 0 8px ${theme.vibrant}80`,
                   }}
                 ></div>
 
-                {/* Range Input (hidden visually, interactive layer) */}
+                {/* Seek input */}
                 <input
+                  disabled={loading}
                   type="range"
                   min="0"
-                  max="1"
-                  step="0.01"
-                  value={muted ? 0 : volume}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    setMuted(val === 0);
-                    setVolume(val);
-                  }}
-                  className="absolute top-0 left-0 w-full h-full opacity-0"
+                  max={duration}
+                  step="0.0001"
+                  value={currentTime}
+                  onChange={handleSeek}
+                  className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
                 />
+              </div>
 
-                {/* Tooltip */}
-                {hovering && (
-                  <div
-                    className="absolute -top-8 left-[calc(var(--vol)*100%)] transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-full bg-black/70 shadow-lg pointer-events-none"
-                    style={{
-                      "--vol": muted ? 0 : volume,
-                    }}
-                  >
-                    {Math.round((muted ? 0 : volume) * 100)}%
-                  </div>
-                )}
+              <div
+                className="flex justify-between text-xs mt-1"
+                style={{ color: theme.lightMuted }}
+              >
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
               </div>
             </div>
-          </div>
-        </section>
 
-        {onTogglePlaylist && (
-          <button
-            className="fixed bottom-2 left-1/2 transform -translate-x-1/2 z-50 sm:hidden bg-black/40 px-4 py-2 rounded-full text-sm text-white shadow-lg"
+            {meta.qualityText && (
+              <div className="w-full overflow-hidden mt-1">
+                <div className="relative whitespace-nowrap">
+                  <div
+                    className="text-xs text-center mx-auto w-max font-mono tracking-wide opacity-80"
+                    style={{
+                      color: theme.lightMuted,
+                      animation:
+                        meta.qualityText.length > 40
+                          ? "scroll-text 12s linear infinite"
+                          : "none",
+                    }}
+                  >
+                    {meta.qualityText}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Controls */}
+            <div className="flex justify-center items-center gap-8 mt-8">
+              <button
+                onClick={playPrevious}
+                className="text-2xl hover:scale-110 transition opacity-80"
+                style={{ color: theme.vibrant }}
+              >
+                <FaStepBackward />
+              </button>
+
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className={`rounded-full shadow-lg ${
+                  loading ? "animate-spi p-1" : "p-4"
+                }`}
+                style={{
+                  backgroundColor: theme.vibrant,
+                  color: theme.darkVibrant,
+                  boxShadow: `0 0 20px ${theme.vibrant}80`,
+                }}
+                onClick={togglePlay}
+              >
+                {loading ? (
+                  <FaCompactDisc
+                    className="animate-spin"
+                    size={40}
+                    style={{ color: theme.darkVibrant }}
+                  />
+                ) : playing ? (
+                  <FaPause />
+                ) : (
+                  <FaPlay />
+                )}
+              </motion.button>
+
+              <button
+                onClick={playNext}
+                className="text-2xl hover:scale-110 transition opacity-80"
+                style={{ color: theme.vibrant }}
+              >
+                <FaStepForward />
+              </button>
+            </div>
+
+            {/* Volume Control */}
+            <div className="w-full mt-6 px-4">
+              <div className="flex items-center gap-3">
+                <button
+                  className="text-lg hover:scale-110 transition"
+                  onClick={toggleMute}
+                  style={{ color: theme.lightMuted }}
+                >
+                  {getVolumeIcon()}
+                </button>
+
+                <div
+                  className="relative w-10/12 h-3 rounded-full bg-black/2/*  */0 group overflow-hidden cursor-pointer"
+                  onMouseEnter={() => setHovering(true)}
+                  onMouseLeave={() => setHovering(false)}
+                  onTouchStart={() => setHovering(true)}
+                  onTouchEnd={() => setHovering(false)}
+                >
+                  {/* Filled Volume */}
+                  <div
+                    className="absolute top-0 left-0 h-full rounded-full transition-all"
+                    style={{
+                      width: `${(muted ? 0 : volume) * 100}%`,
+                      backgroundColor: theme.vibrant,
+                      boxShadow: `0 0 8px ${theme.vibrant}80`,
+                    }}
+                  ></div>
+
+                  {/* Range Input (hidden visually, interactive layer) */}
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={muted ? 0 : volume}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setMuted(val === 0);
+                      setVolume(val);
+                    }}
+                    className="absolute top-0 left-0 w-full h-full opacity-0"
+                  />
+
+                  {/* Tooltip */}
+                  {hovering && (
+                    <div
+                      className="absolute -top-8 left-[calc(var(--vol)*100%)] transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-full bg-black/70 shadow-lg pointer-events-none"
+                      style={{
+                        "--vol": muted ? 0 : volume,
+                      }}
+                    >
+                      {Math.round((muted ? 0 : volume) * 100)}%
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {onTogglePlaylist && (
+                <div className="flex justify-center items-center gap-8 mt-8 mb-4">
+                  <button
+                    className="sm:hidden px-4 py-2 rounded-full text-sm text-white shadow-lg"
+                    onClick={onTogglePlaylist}
+                    style={{backgroundColor: theme.vibrant+90}}
+                  >
+                    Open Playlist
+                  </button>
+                </div>
+                /* <button
+            className="sticky bottom-2 left-1/2 transform -translate-x-1/2 z-50 sm:hidden bg-black/40 px-4 py-2 rounded-full text-sm text-white shadow-lg"
             onClick={onTogglePlaylist}
-          >
+            >
             Open Playlist
-          </button>
-        )}
+          </button> */
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

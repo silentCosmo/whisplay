@@ -24,9 +24,19 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  padding-top: env(safe-area-inset-top); /* for notch support */
+  /* background: linear-gradient(to bottom, rgba(0,0,0,0.6), #000); */
 }
 
-
+.status-bar-spacer {
+  height: env(safe-area-inset-top);
+  background: rgba(0, 0, 0, 0.3); /* translucent effect */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+}
 
 
 @keyframes scroll-text {
