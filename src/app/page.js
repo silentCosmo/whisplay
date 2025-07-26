@@ -63,6 +63,17 @@ export default function HomePage() {
   const router = useRouter();
   useInitSongs();
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then((reg) => console.log('SW registered: ', reg))
+          .catch((err) => console.error('SW registration failed: ', err));
+      });
+    }
+  }, []);
+
   const { songs, currentSong, setCurrentSong } = useSongStore();
   const [recent, setRecent] = useState([]);
   const [featured, setFeatured] = useState([]);

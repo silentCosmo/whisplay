@@ -420,7 +420,8 @@ export default function PlayerPage({ onTogglePlaylist }) {
                       filter:
                         playing && !loading
                           ? "brightness(0.5)"
-                          : "brightness(0.9)",
+                          : "brightness(0.8)",
+                          transition: "filter 0.5s ease-in-out",
                     }}
                     //onClick={toggleMode}
                   />
