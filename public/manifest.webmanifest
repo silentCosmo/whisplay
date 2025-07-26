@@ -1,0 +1,22 @@
+{
+  "name": "Whisplay",
+  "short_name": "Whisplay",
+  "description": "Born of silence and tuned in love.",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay"],
+  "background_color": "#09090b",
+  "theme_color": "#4c0519",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
