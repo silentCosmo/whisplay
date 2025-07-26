@@ -111,7 +111,7 @@ export default function LibraryDoorPage() {
       placeholder: "Coming soon: curated radio stations for every mood!",
     },
     audiobooks: {
-      title: "Mini Audiobooks",
+      title: "Audiobooks",
       icon: <BookText size={32} />,
       placeholder: "Relax with short and sweet audiobooks. Coming soon!",
     },
@@ -122,7 +122,7 @@ export default function LibraryDoorPage() {
   if (!data) return null;
 
   return (
-    <div className="p-6 max-w-screen-md mx-auto">
+    <div className="p-6 max-w-screen-md mx-auto h-[93dvh]">
       <div className="flex items-center gap-4 mb-6">
         <div className="bg-white/10 p-3 rounded-lg text-white">{data.icon}</div>
         <h1 className="text-2xl font-bold text-white tracking-tight">

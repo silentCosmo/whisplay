@@ -11,6 +11,7 @@ import HorizontalCardScroll from "@/components/home/HorizontalCardScroll";
 import GridCard from "@/components/home/GridCard";
 import ImageWithFallback from "@/lib/imageWithFallback";
 import AppInstallPrompt from "@/components/AppInstallPrompt";
+import Skeleton from "@/components/Skeleton";
 
 const moods = [
   { title: "Chill & Night", tags: ["chill", "focus", "night"] },
@@ -62,23 +63,31 @@ const keySections = [
 
 export default function HomePage() {
   const router = useRouter();
-  useInitSongs();
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register('/sw.js')
-          .then((reg) => console.log('SW registered: ', reg))
-          .catch((err) => console.error('SW registration failed: ', err));
+          .register("/sw.js")
+          .then((reg) => console.log("SW registered: ", reg))
+          .catch((err) => console.error("SW registration failed: ", err));
       });
     }
   }, []);
 
+  
   const { songs, currentSong, setCurrentSong } = useSongStore();
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    setIsLoading(songs.length === 0);
+  }, [songs]);
+
   const [recent, setRecent] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [topTags, setTopTags] = useState([]);
+
+  useInitSongs();
+
   const getByTags = (tagList) =>
     songs.filter((s) => s.tags?.some((t) => tagList.includes(t)));
 
@@ -95,17 +104,22 @@ export default function HomePage() {
 
   useEffect(() => {
     const random = [...songs].sort(() => 0.5 - Math.random()).slice(0, 5);
-    setFeatured(random);
+    if (random !== featured) {
+      setFeatured(random); // Only update if the featured list changes
+    }
     const recent = JSON.parse(localStorage.getItem("recentPlayed") || "[]");
     setRecent(recent);
 
     const tagMap = new Map();
 
-    songs.forEach((song) => {
-      song.tags?.forEach((tag) => {
-        tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-      });
-    });
+    songs.forEach(
+      (song) => {
+        song.tags?.forEach((tag) => {
+          tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+        });
+      },
+      [songs]
+    );
 
     const sorted = Array.from(tagMap.entries())
       .sort((a, b) => b[1] - a[1])
@@ -153,10 +167,10 @@ export default function HomePage() {
   return (
     <div>
       <Header />
-      <AppInstallPrompt/>
+      <AppInstallPrompt />
       <div className="px-6 py-20 mb-10 space-y-12 overflow-auto h-[93dvh]">
         {/* Hero */}
-        {featured[0] && (
+        {featured[0] ? (
           <motion.div
             className="relative h-[300px] rounded-3xl overflow-hidden shadow-lg"
             initial={{ opacity: 0 }}
@@ -180,57 +194,81 @@ export default function HomePage() {
               </button>
             </div>
           </motion.div>
+        ) : (
+          <div className="relative h-[300px] rounded-3xl overflow-hidden shadow-lg">
+            {/* Background image skeleton */}
+            <Skeleton
+              type="image"
+              width="100%"
+              height="100%"
+              borderRadius="1.5rem"
+              className="absolute inset-0"
+            />
+
+            {/* Content skeletons over image */}
+            <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
+              {/* Title skeleton */}
+              <Skeleton
+                width="66%"
+                height="28px"
+                borderRadius="8px"
+                className="mb-4"
+              />
+              {/* Artist skeleton */}
+              <Skeleton
+                width="40%"
+                height="20px"
+                borderRadius="6px"
+                className="mb-6"
+              />
+              {/* Button skeleton */}
+              <Skeleton width="128px" height="40px" borderRadius="9999px" />
+            </div>
+          </div>
         )}
 
         {/* Sections */}
-        <Section title="Recently Played">
-          <HorizontalCardScroll
-            items={recent.slice(0,10)}
-            onClick={(song) => handleClick(song, "recently-played", recent)}
-          />
-        </Section>
+        {
+          /* recent.length && */ <Section title="Recently Played">
+            <HorizontalCardScroll
+              items={recent.slice(0, 10)}
+              onClick={(song) => handleClick(song, "recently-played", recent)}
+              isLoading={isLoading}
+            />
+          </Section>
+        }
 
-        {suggestions.length > 0 && (
-          <Section title="🎁 Just For You">
+        {
+          /* suggestions.length > 0 && */ <Section title="🎁 Just For You">
             <GridCard
               items={suggestions}
               onClick={(song) => handleClick(song, "suggestions", suggestions)}
+              isLoading={isLoading}
             />
           </Section>
-        )}
+        }
 
-        {/* <Section title="Lofi Chill">
-          <HorizontalCardScroll
-            items={getUniqueByTags(["lofi", "chill", "mellow", "dreamy"])}
-            onClick={(song) =>
-              handleClick(
-                song,
-                "lofi-chill",
-                getUniqueByTags(["lofi", "chill", "mellow", "dreamy"])
-              )
-            }
-          />
-        </Section> */}
-
-        <Section title="Lofi Chill">
-          {/* Calculate the playlist once and reuse it */}
-          {(() => {
-            const lofiChillSongs = getUniqueByTags([
-              "lofi",
-              "chill",
-              "mellow",
-              "dreamy",
-            ]);
+        {/* Calculate the playlist once and reuse it */}
+        {(() => {
+          const lofiChillSongs = getUniqueByTags([
+            "lofi",
+            "chill",
+            "mellow",
+            "dreamy",
+          ]);
+          if (lofiChillSongs.length) {
             return (
-              <HorizontalCardScroll
-                items={lofiChillSongs}
-                onClick={(song) =>
-                  handleClick(song, "lofi-chill", lofiChillSongs)
-                }
-              />
+              <Section title="Lofi Chill">
+                <HorizontalCardScroll
+                  items={lofiChillSongs}
+                  onClick={(song) =>
+                    handleClick(song, "lofi-chill", lofiChillSongs)
+                  }
+                />
+              </Section>
             );
-          })()}
-        </Section>
+          }
+        })()}
 
         {[...moods, ...tempoSections, ...eraSections, ...keySections].map(
           ({ title, tags }) => {
