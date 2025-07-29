@@ -15,7 +15,7 @@ export default function GlobalAudioProvider() {
     playNext,
     setDuration,
     setCurrentTime,
-    setIsBuffering
+    setIsBuffering,
   } = useSongStore();
 
   useEffect(() => {
@@ -23,25 +23,6 @@ export default function GlobalAudioProvider() {
       setAudioRef(audioRef.current);
     }
   }, []);
-
-  // Handle song change
-  /* useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !currentSong?.url) return;
-
-    const fullUrl = location.origin + currentSong.url;
-
-    if (audio.src !== fullUrl) {
-      audio.src = fullUrl;
-      audio.load();
-      if (playing) {
-        audio
-          .play()
-          .then(() => setPlaying(true))
-          .catch(() => setPlaying(false));
-      }
-    }
-  }, [currentSong]); */
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -56,10 +37,18 @@ export default function GlobalAudioProvider() {
       // Only play if playing state is true (so manual pause still works)
       if (playing) {
         const tryPlay = () => {
-          audio.play().catch((err) => {
+          /* audio.play().catch((err) => {
             console.warn("🎧 Auto play failed:", err.message);
             setPlaying(false);
-          });
+          }); */
+
+          audio
+            .play()
+            .then(() => setPlaying(true))
+            .catch((err) => {
+              console.warn("🎧 Auto play failed:", err.message);
+              setPlaying(false);
+            });
         };
 
         if (audio.readyState >= 2) {
@@ -92,7 +81,6 @@ export default function GlobalAudioProvider() {
 
     const handleWaiting = () => {
       useSongStore.getState().setIsBuffering(true);
-      
     };
     const handleCanPlay = () => {
       useSongStore.getState().setIsBuffering(false);
@@ -114,6 +102,7 @@ export default function GlobalAudioProvider() {
       crossOrigin="anonymous"
       ref={audioRef}
       preload="auto"
+      autoPlay
       onTimeUpdate={(e) => {
         setCurrentTime(e.target.currentTime);
       }}
@@ -136,40 +125,6 @@ export default function GlobalAudioProvider() {
           } */
 
         playNext();
-
-        /* const {
-          getCurrentPlaylistSongs,
-          currentSong,
-          setCurrentSong,
-          setPlaying,
-          generateSmartAutoplayPreview,
-        } = useSongStore.getState();
-
-        const playlist = getCurrentPlaylistSongs?.() || [];
-        const currentIndex = playlist.findIndex(
-          (s) => s.id === currentSong?.id
-        );
-
-        if (currentIndex >= 0 && currentIndex < playlist.length - 1) {
-          const next = playlist[currentIndex + 1];
-          setCurrentSong(next);
-          setPlaying(true); // <==== Play immediately!
-          return;
-        }
-
-        const fallbackQueue = generateSmartAutoplayPreview?.(currentSong) || [];
-        if (fallbackQueue.length > 0) {
-          console.log(
-            "🎯 Playing from Up Next fallback:",
-            fallbackQueue[0]?.title
-          );
-          setCurrentSong(fallbackQueue[0]);
-          setPlaying(true); // <==== Play immediately!
-          return;
-        }
-
-        console.log("⛔ Playback ended. No songs left.");
-        setPlaying(false); */
       }}
     />
   );

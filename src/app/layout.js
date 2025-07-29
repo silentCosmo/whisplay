@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
         className={`${quickSand.className}  antialiased bg-[red] overflow-hidden`}
       >
          <div className="status-bar-spacer" />
-        <main className="max-w-4xl mx-auto md:p-6 pb-10">{children}</main>
+        <main className="max-w-4xl mx-auto md:p- pb-10">{children}</main>
 
         <div id="animation-root" className="fixed inset-0 pointer-events-none z-[10]" />
         <MiniPlayer/>

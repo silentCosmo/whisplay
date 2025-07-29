@@ -22,7 +22,7 @@ import { PiWaveformBold } from "react-icons/pi";
 import { SiCircle } from "react-icons/si";
 import { RxBarChart } from "react-icons/rx";
 import { GiBurstBlob } from "react-icons/gi";
-import { RiScan2Line, RiBubbleChartFill } from "react-icons/ri";
+import { RiBubbleChartFill } from "react-icons/ri";
 
 import VisualizerCanvas from "@/lib/visualizerCanvas";
 
@@ -30,7 +30,7 @@ import { FaVolumeMute, FaVolumeDown } from "react-icons/fa";
 import ImageWithFallback from "@/lib/imageWithFallback";
 import Link from "next/link";
 import Whisplay from "@/utils/appName";
-import { getThemeColor } from "@/utils/getThemeColor";
+import { TbAntennaBarsOff } from "react-icons/tb";
 
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
@@ -59,10 +59,10 @@ export default function PlayerPage({ onTogglePlaylist }) {
     aura: <FaCircle />,
     blob: <GiBurstBlob />,
     liquid: <FaTint />,
-    pulsewave: <RiScan2Line />,
     sparkle: <RiBubbleChartFill />,
     rings: <SiCircle />,
     beatsplash: <RxBarChart />,
+    none: <TbAntennaBarsOff />,
   };
   const [loading, setLoading] = useState(true);
   const [vizReady, setVizReady] = useState(false);
@@ -77,13 +77,14 @@ export default function PlayerPage({ onTogglePlaylist }) {
   const modes = [
     //"spectrum",
     "mirror",
+    "blob",
     "wave",
     "aura",
-    "blob",
     "liquid",
-    "pulsewave",
-    "sparkle",
+    //"pulsewave",
     "rings",
+    "sparkle",
+    "none",
     "beatsplash",
   ];
 
@@ -344,7 +345,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
             <motion.div
               className="overflow-hidden rounded-[inherit]"
               style={{
-                borderRadius: showCover ? 10 : 0,
+                borderRadius: showCover ? 6 : 0,
               }}
               animate={{
                 width:
@@ -385,7 +386,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
               if (e.target.tagName !== "INPUT") setShowCover(!showCover);
             }}
             style={{
-              borderRadius: showCover ? 10 : 0,
+              borderRadius: showCover ? 6 : 0,
               aspectRatio: "1 / 1",
             }}
             animate={{
@@ -431,7 +432,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
           </motion.div>
         </div>
 
-        <div className="w-full fixed bottom-0">
+        <div className="w-full fixed bottom-0 md:-bottom-6">
           <div
             className="mt-4 flex gap-3 items-center justify-center text-xs relative"
             style={{ color: theme.lightMuted }}
@@ -506,7 +507,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
             </div>
           </div>
 
-          <section className="w-full  px-6">
+          <div className="w-full md:max-w-lg relative mx-auto px-6">
             <div className="mt-6 w-full">
               {/* <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
               <div
@@ -702,7 +703,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
                   <button
                     className="sm:hidden px-4 py-2 rounded-full text-sm text-white shadow-lg"
                     onClick={onTogglePlaylist}
-                    style={{backgroundColor: theme.vibrant+90}}
+                    style={{ backgroundColor: theme.vibrant + 90 }}
                   >
                     Open Playlist
                   </button>
@@ -715,7 +716,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
           </button> */
               )}
             </div>
-          </section>
+          </div>
         </div>
       </div>
     </div>

@@ -56,6 +56,10 @@ export default function VisualizerCanvas({
       const avg = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
       if (onBeat) onBeat(avg);
 
+      if (mode === "none"){
+    return null;
+  }
+
       const barWidth = (canvas.width / bufferLength) * 2;
 
       switch (mode) {
@@ -110,7 +114,7 @@ export default function VisualizerCanvas({
           break;
         }
 
-        case "pulsewave": {
+        /* case "pulsewave": {
           if (!canvas.pulses) canvas.pulses = [];
           const now = Date.now();
           if (avg > 30 && (!canvas.lastPulse || now - canvas.lastPulse > 200)) {
@@ -133,7 +137,7 @@ export default function VisualizerCanvas({
             return true;
           });
           break;
-        }
+        } */
 
         case "sparkle": {
           const sparkleCount = Math.floor(avg / 4);
