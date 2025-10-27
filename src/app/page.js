@@ -147,6 +147,8 @@ export default function HomePage() {
   };
 
   const suggestions = songs.filter((s) => !usedIds.has(s.id)).slice(0, 6);
+  console.log('su: ', suggestions);
+  
 
   const handleClick = (song, playlistId, playlistSongs) => {
     const { setPlaylist, setCurrentPlaylistId, setCurrentSong } =
