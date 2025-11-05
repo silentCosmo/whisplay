@@ -32,6 +32,32 @@ import Link from "next/link";
 import Whisplay from "@/utils/appName";
 import { TbAntennaBarsOff } from "react-icons/tb";
 
+let wakeLock = null;
+
+async function requestWakeLock() {
+  try {
+    if ("wakeLock" in navigator) {
+      wakeLock = await navigator.wakeLock.request("screen");
+      console.log("🔋 Wake lock active");
+      wakeLock.addEventListener("release", () => {
+        console.log("⚡ Wake lock released");
+      });
+    } else {
+      console.warn("Wake Lock API not supported on this browser");
+    }
+  } catch (err) {
+    console.error("Wake Lock request failed:", err);
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+}
+
+
 export default function PlayerPage({ onTogglePlaylist }) {
   const { id } = useParams();
   const router = useRouter();
@@ -247,14 +273,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
     }
   }, [duration]);
 
-  /* const handleSeek = (e) => {
-    const time = parseFloat(e.target.value);
-    if (audioRef?.current) {
-      audioRef.current.currentTime = time;
-    }
-    setProgress(time);
-  }; */
-
   const handleSeek = (e) => {
     const time = parseFloat(e.target.value);
     useSongStore.getState().seekTo(time);
@@ -277,18 +295,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
     useSongStore.getState().setProgress(0);
   };
 
-  /* const handleVolumeChange = (e) => {
-    const vol = parseFloat(e.target.value);
-    if (audioRef?.current) {
-      audioRef.current.volume = vol;
-    }
-    setVolume(vol);
-  }; */
-
-  /* const formatTime = (t) =>
-    isNaN(t)
-      ? "0:00"
-      : `${Math.floor(t / 60)}:${("0" + Math.floor(t % 60)).slice(-2)}`; */
 
       const formatTime = (t) =>
   isNaN(t) || t < 0
@@ -307,6 +313,17 @@ export default function PlayerPage({ onTogglePlaylist }) {
       setPlaying(true);
     }
   };
+
+  useEffect(() => {
+  if (playing) {
+    requestWakeLock();
+  } else {
+    releaseWakeLock();
+  }
+
+  return () => releaseWakeLock();
+}, [playing]);
+
 
   return (
     <div
@@ -517,25 +534,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
           <div className="w-full md:max-w-lg relative mx-auto px-6">
             <div className="mt-6 w-full">
-              {/* <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
-              <div
-                className="absolute top-0 left-0 h-full bg-pink-500 transition-all"
-                style={{
-                  width: `${progress}%`,
-                  backgroundColor: theme.vibrant,
-                }}
-              ></div>
-              <input
-                disabled={loading}
-                type="range"
-                min="0"
-                max={duration}
-                step="0.0001"
-                value={currentTime}
-                onChange={handleSeek}
-                className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-              />
-            </div> */}
+              
               <div className="relative w-full h-3 bg-black/20 rounded-full overflow-hidden group">
                 <div
                   className="buffering-seek-bar transition-opacity duration-300"
@@ -718,12 +717,6 @@ export default function PlayerPage({ onTogglePlaylist }) {
                     Open Playlist
                   </button>
                 </div>
-                /* <button
-            className="sticky bottom-2 left-1/2 transform -translate-x-1/2 z-50 sm:hidden bg-black/40 px-4 py-2 rounded-full text-sm text-white shadow-lg"
-            onClick={onTogglePlaylist}
-            >
-            Open Playlist
-          </button> */
               )}
             </div>
           </div>

@@ -28,8 +28,8 @@ export default function LibraryDoorPage() {
         if (userSongs.length > 0) {
           setSongs(userSongs);
         } else {
-          const query = door === "audiobooks" ? "?type=audiobook" : "";
-          const res = await fetch(`/api/songs${query}`);
+          const query = door === "audiobooks" ? "books" : "songs";
+          const res = await fetch(`/api/${query}`);
           const data = await res.json();
           setSongs(data);
         }

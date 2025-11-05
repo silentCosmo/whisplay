@@ -1,20 +1,28 @@
 import { connectToDB } from "@/lib/db";
 
-export const dynamic = "force-dynamic"; // if needed
+export const dynamic = "force-dynamic";
 
 export async function GET(req, { params }) {
-  const { id } = await params;
-  console.log(id);
-  
+  const { id } = params; // params is already an object
+  if (!id) {
+    return new Response(JSON.stringify({ error: "Missing ID" }), { status: 400 });
+  }
 
   try {
     const db = await connectToDB();
-    const songs = db.collection("songs");
+    const songsCollection = db.collection("songs");
+    const audiobooksCollection = db.collection("audiobooks");
 
-    const song = await songs.findOne({ id });
+    // Try songs first
+    let song = await songsCollection.findOne({ id });
+
+    // If not found in songs, check audiobooks
+    if (!song) {
+      song = await audiobooksCollection.findOne({ id });
+    }
 
     if (!song) {
-      return new Response(JSON.stringify({ error: "Song not found" }), {
+      return new Response(JSON.stringify({ error: "Song/Audiobook not found" }), {
         status: 404,
       });
     }
@@ -31,6 +39,9 @@ export async function GET(req, { params }) {
         bitDepth: song.bitDepth || null,
         qualityText: song.qualityText || null,
         tags: song.tags || null,
+        duration: song.duration || null, // <-- make sure duration is included
+        type: song.type || "song", // optional, helps frontend know if audiobook
+        url: song.url || null, // especially important for audiobooks
       }),
       {
         headers: {

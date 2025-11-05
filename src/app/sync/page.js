@@ -19,7 +19,9 @@ export default function SyncStatus() {
     setCurrentSongInfo("");
     setReconnecting(false); // Reset reconnecting status
 
-    const eventSource = new EventSource(`/api/sync${force ? "?force=true" : ""}`);
+    const eventSource = new EventSource(
+      `/api/sync${force ? "?force=true" : ""}`
+    );
 
     eventSource.onmessage = (e) => {
       const data = e.data;

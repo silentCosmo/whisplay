@@ -75,7 +75,6 @@ export default function HomePage() {
     }
   }, []);
 
-  
   const { songs, currentSong, setCurrentSong } = useSongStore();
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
@@ -147,8 +146,7 @@ export default function HomePage() {
   };
 
   const suggestions = songs.filter((s) => !usedIds.has(s.id)).slice(0, 6);
-  console.log('su: ', suggestions);
-  
+  console.log("su: ", suggestions);
 
   const handleClick = (song, playlistId, playlistSongs) => {
     const { setPlaylist, setCurrentPlaylistId, setCurrentSong } =
@@ -291,6 +289,16 @@ export default function HomePage() {
               </Section>
             );
           }
+        )}
+
+        {/* Global Library Section */}
+        {songs.length > 0 && (
+          <Section title="🎧 The WhisplayList" subtitle=" 🎶Every track. Every vibe. One Whisplaylist.">
+            <GridCard
+              items={songs}
+              onClick={(song) => handleClick(song, "whisplaylist", songs)}
+            />
+          </Section>
         )}
 
         {/* {[...moods, ...tempoSections, ...eraSections, ...keySections].map(({ title, tags }) => {

@@ -88,204 +88,175 @@ export async function GET(req) {
         let synced = 0;
 
         for (let index = 0; index < files.length; index++) {
-          const file = files[index];
-          const { id: fileId, name: fileName, mimeType } = file;
-          const isAudiobook = file.parents?.includes(AUDIOBOOK_FOLDER_ID);
-          try {
-            await drive.files.get({ fileId });
-          } catch (err) {
-            if (err.code === 404) {
-              // If file is not found (trashed or deleted), remove it from DB
-              await songsCollection.deleteOne({ id: fileId });
-              send(`❌ File deleted from Drive: ${fileName}. Removed from DB.`);
-              continue; // Skip this file and move to the next one
-            }
-          }
+  const file = files[index];
+  const { id: fileId, name: fileName, mimeType } = file;
+  const isAudiobook = file.parents?.includes(AUDIOBOOK_FOLDER_ID);
 
-          const progressInfo = `🎼 Syncing ${index + 1} of ${
-            files.length
-          }: ${fileName}`;
-          send(progressInfo);
+  try {
+    // Check if file still exists on Drive
+    await drive.files.get({ fileId });
+  } catch (err) {
+    if (err.code === 404) {
+      // If file is deleted or trashed, remove from DB
+      const collection = isAudiobook
+        ? db.collection("audiobooks")
+        : songsCollection;
+      await collection.deleteOne({ id: fileId });
+      send(`❌ File deleted from Drive: ${fileName}. Removed from DB.`);
+      continue;
+    }
+  }
 
-          const exists = await songsCollection.findOne({ id: fileId });
+  const progressInfo = `🎼 Syncing ${index + 1} of ${files.length}: ${fileName}`;
+  send(progressInfo);
 
-          if (exists && force && exists.cover) {
-            const coverMatch = exists.cover.match(/id=([a-zA-Z0-9_-]+)/);
-            const oldCoverId = coverMatch?.[1];
-            if (oldCoverId) {
-              try {
-                await drive.files.delete({ fileId: oldCoverId });
-                send(`🗑️ Deleted old cover for ${fileName}`);
-              } catch (err) {
-                send(`⚠️ Failed to delete old cover: ${err.message}`);
-              }
-            }
-          }
+  // Get the existing record
+  const collection = isAudiobook ? db.collection("audiobooks") : songsCollection;
+  const exists = await collection.findOne({ id: fileId });
 
-          // 💡 Skip if not forcing and already has theme
-          if (!force && exists && "theme" in exists) {
-            alreadySynced++;
-            send(`✅ Already synced: ${fileName}`);
-            continue;
-          }
+  // ✅ Skip already-synced audiobooks unless forced
+  if (isAudiobook && exists && !force) {
+    alreadySynced++;
+    send(`✅ Already synced audiobook: ${fileName}`);
+    continue;
+  }
 
-          // 💡 Skip if already synced AND theme field exists (even if false)
-          /* if (!force && exists && "theme" in exists) {
-            alreadySynced++;
-            send(`✅ Already synced: ${fileName}`);
-            continue;
-          } */
+  // ✅ Skip already-synced songs unless forced or theme missing
+  if (!isAudiobook && exists && !force && "theme" in exists) {
+    alreadySynced++;
+    send(`✅ Already synced song: ${fileName}`);
+    continue;
+  }
 
-          send(`🎧 Processing: ${fileName}`);
+  send(`🎧 Processing: ${fileName}`);
 
-          try {
-            const { data: fileStream } = await drive.files.get(
-              { fileId, alt: "media" },
-              { responseType: "arraybuffer" }
-            );
+  try {
+    const { data: fileStream } = await drive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "arraybuffer" }
+    );
+    const buffer = Buffer.from(fileStream);
 
-            const buffer = Buffer.from(fileStream);
-            let title = fileName.replace(/\.[^/.]+$/, "");
-            let artist = "Unknown Artist";
-            let cover = null;
-            let duration = 0;
-            let theme = null;
+    let title = fileName.replace(/\.[^/.]+$/, "");
+    let artist = "Unknown Artist";
+    let cover = null;
+    let duration = 0;
+    let theme = null;
 
-            const meta = await parseBuffer(buffer, mimeType);
-            title = meta.common.title || title;
-            artist = meta.common.artist || artist;
-            duration = meta.format.duration || 0;
+    /* const meta = await parseBuffer(buffer, mimeType);
+    title = meta.common.title || title;
+    artist = meta.common.artist || artist;
+    duration = meta.format.duration || 0; */
 
-            // Format & Quality Info
-            const format =
-              meta.format.container?.toUpperCase() ||
-              mimeType?.split("/").pop()?.toUpperCase() ||
-              "Unknown";
-            const bitrate = meta.format.bitrate
-              ? Math.round(meta.format.bitrate / 1000) + "kbps"
-              : null;
-            const sampleRate = meta.format.sampleRate
-              ? (meta.format.sampleRate / 1000).toFixed(1) + "kHz"
-              : null;
-            const bitDepth = meta.format.bitsPerSample
-              ? `${meta.format.bitsPerSample}-bit`
-              : null;
+    // Let music-metadata auto-detect the format (better for m4a)
+const meta = await parseBuffer(buffer); // remove mimeType
 
-            const qualityText = [format, /* bitDepth, */ sampleRate, bitrate]
-              .filter(Boolean)
-              .join(" · ");
+// Fallback for artist (AAC often uses albumartist instead of artist)
+title = meta.common.title || title;
+artist = meta.common.artist || meta.common.albumartist || "Unknown Artist";
+duration = meta.format.duration || 0;
+// Fallback for cover
+//const pic = meta.common.picture?.[0] || null;
 
-            send(`📐 Quality Info: ${qualityText}`);
 
-            const pic = meta.common.picture?.[0];
-            if (pic) {
-              send(`📤 Uploading cover image...`);
-              const imageBuffer = Buffer.from(pic.data);
-              const imageStream = Readable.from(imageBuffer);
+    // Format & quality info
+    const format =
+      meta.format.container?.toUpperCase() ||
+      mimeType?.split("/").pop()?.toUpperCase() ||
+      "Unknown";
+    const bitrate = meta.format.bitrate
+      ? Math.round(meta.format.bitrate / 1000) + "kbps"
+      : null;
+    const sampleRate = meta.format.sampleRate
+      ? (meta.format.sampleRate / 1000).toFixed(1) + "kHz"
+      : null;
+    const bitDepth = meta.format.bitsPerSample
+      ? `${meta.format.bitsPerSample}-bit`
+      : null;
 
-              /* const { data: uploaded } = await drive.files.create({
-                requestBody: {
-                  name: `${fileId}_cover.jpg`,
-                  mimeType: pic.format || "image/jpeg",
-                  parents: [process.env.GOOGLE_DRIVE_COVER_FOLDER],
-                },
-                media: {
-                  mimeType: pic.format || "image/jpeg",
-                  body: imageStream,
-                },
-              }); 
+    const qualityText = [format, sampleRate, bitrate].filter(Boolean).join(" · ");
+    send(`📐 Quality Info: ${qualityText}`);
 
-              cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;*/
+    // Handle cover image & theme
+    const pic = meta.common.picture?.[0];
+    if (pic) {
+      send(`📤 Uploading cover image...`);
+      const imageBuffer = Buffer.from(pic.data);
+      const imageStream = Readable.from(imageBuffer);
 
-              function sanitizeFilename(filename) {
-                // Remove special characters that are not allowed in file names
-                return filename.replace(/[^a-zA-Z0-9-_ ]/g, "_"); // Keep spaces and letters/numbers
-              }
+      function sanitizeFilename(filename) {
+        return filename.replace(/[^a-zA-Z0-9-_ ]/g, "_");
+      }
+      function removeExtension(filename) {
+        return filename.replace(/\.[^/.]+$/, "");
+      }
 
-              function removeExtension(filename) {
-                // Remove file extension, leaving just the song name (e.g., "song.flac" -> "song")
-                return filename.replace(/\.[^/.]+$/, ""); // Remove the last period and any characters following it (extension)
-              }
+      const sanitizedSongName = sanitizeFilename(removeExtension(fileName));
+      const albumArtFilename = `${sanitizedSongName}_cover.jpg`;
 
-              const sanitizedSongName = sanitizeFilename(
-                removeExtension(fileName)
-              ); // Remove the extension first, then sanitize
-              const albumArtFilename = `${sanitizedSongName}_cover.jpg`; // Add the "_cover" suffix
+      const { data: uploaded } = await drive.files.create({
+        requestBody: {
+          name: albumArtFilename,
+          mimeType: pic.format || "image/jpeg",
+          parents: [process.env.GOOGLE_DRIVE_COVER_FOLDER],
+        },
+        media: {
+          mimeType: pic.format || "image/jpeg",
+          body: imageStream,
+        },
+      });
 
-              const { data: uploaded } = await drive.files.create({
-                requestBody: {
-                  name: albumArtFilename, // Use the sanitized song name as the filename (e.g. "skyfall_cover.jpg")
-                  mimeType: pic.format || "image/jpeg",
-                  parents: [process.env.GOOGLE_DRIVE_COVER_FOLDER],
-                },
-                media: {
-                  mimeType: pic.format || "image/jpeg",
-                  body: imageStream,
-                },
-              });
+      cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;
+      send(`✅ Cover uploaded: ${uploaded.id}`);
 
-              cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;
-              send(`✅ Cover uploaded: ${uploaded.id}`);
+      send(`🎨 Extracting color palette...`);
+      const palette = await Vibrant.from(imageBuffer).getPalette();
+      theme = {
+        vibrant: palette.Vibrant?.hex || null,
+        darkVibrant: palette.DarkVibrant?.hex || null,
+        lightVibrant: palette.LightVibrant?.hex || null,
+        muted: palette.Muted?.hex || null,
+        darkMuted: palette.DarkMuted?.hex || null,
+        lightMuted: palette.LightMuted?.hex || null,
+      };
+      send(`✅ Theme colors extracted`);
+    } else {
+      theme = false;
+      send(`🎨 No cover found: ${fileName} (skipping theme generation)`);
+    }
 
-              send(`🎨 Extracting color palette...`);
-              const palette = await Vibrant.from(imageBuffer).getPalette();
-              theme = {
-                vibrant: palette.Vibrant?.hex || null,
-                darkVibrant: palette.DarkVibrant?.hex || null,
-                lightVibrant: palette.LightVibrant?.hex || null,
-                muted: palette.Muted?.hex || null,
-                darkMuted: palette.DarkMuted?.hex || null,
-                lightMuted: palette.LightMuted?.hex || null,
-              };
-              send(`✅ Theme colors extracted`);
-            } else {
-              // 💡 No cover available – mark it explicitly so we skip later
-              theme = false;
-              send(
-                `🎨 No cover found: ${fileName} (theme skipped theme generation)`
-              );
-            }
+    let lyrics_snippet = null;
+    if (meta.common.lyrics && meta.common.lyrics.length > 0) {
+      lyrics_snippet = meta.common.lyrics[0].slice(0, 150);
+      send(`📝 Lyrics snippet extracted`);
+    }
 
-            let lyrics_snippet = null;
-            if (meta.common.lyrics && meta.common.lyrics.length > 0) {
-              console.log("ls", lyrics_snippet);
+    const bpm = meta.common.bpm || null;
+    const key = meta.common.key || null;
+    const album = meta.common.album || null;
+    const genre = meta.common.genre?.[0] || null;
+    const year = meta.common.year?.toString() || null;
+    const coverFilename = `${fileId}_cover.jpg`;
 
-              lyrics_snippet = meta.common.lyrics[0].slice(0, 150);
-              send(`📝 Lyrics snippet extracted`);
-            }
+    send(bpm ? `📐 BPM Detected: ${bpm}` : `📐 BPM Detection Failed!`);
+    send(`🧠 Generating tags...`);
+    const tags = autoTags({
+      title,
+      artist,
+      album,
+      genre,
+      bpm,
+      key,
+      year,
+      lyrics_snippet,
+      qualityText,
+      coverFilename,
+    });
+    send(`✅ Tags generated: ${tags.join(", ")}`);
+    send(`💾 Saving to database...`);
 
-            let bpm = meta.common.bpm || null;
-            let key = meta.common.key || null;
-            let album = meta.common.album || null;
-            let genre = meta.common.genre?.[0] || null;
-            let year = meta.common.year?.toString() || null;
-            let coverFilename = `${fileId}_cover.jpg`;
-
-            if (!bpm) {
-              send(`📐 BPM Detection Failed!`);
-            } else {
-              send(`📐 BPM Detected: ${bpm} — Tagging mood accordingly...`);
-            }
-            send(`🧠 Generating tags...`);
-            const tags = autoTags({
-              title,
-              artist,
-              album,
-              genre,
-              bpm,
-              key,
-              year,
-              lyrics_snippet,
-              qualityText,
-              coverFilename,
-            });
-            send(`✅ Tags generated: ${tags.join(", ")}`);
-            send(`💾 Saving to database...`);
-
-            await songsCollection.updateOne(
-  { id: fileId },
-  {
-    $set: {
+    // Upsert in DB
+    const doc = {
       id: fileId,
       title,
       artist,
@@ -302,19 +273,17 @@ export async function GET(req) {
       bitDepth,
       qualityText,
       tags,
-      ...(isAudiobook ? { type: "audiobook" } : {}), // 💥 only tag audiobooks
-    },
-  },
-  { upsert: true }
-);
+      ...(isAudiobook ? { type: "audiobook", url: `/api/song?id=${fileId}` } : {}),
+    };
 
+    await collection.updateOne({ id: fileId }, { $set: doc }, { upsert: true });
+    send(`✅ ${isAudiobook ? "Audiobook" : "Song"} synced: ${title}`);
+    synced++;
+  } catch (err) {
+    send(`❌ Error syncing ${fileName}: ${err.message}`);
+  }
+}
 
-            synced++;
-            send(`✅ Synced: ${title}`);
-          } catch (err) {
-            send(`❌ Error syncing ${fileName}: ${err.message}`);
-          }
-        }
 
         send(`🎉 Sync complete.`);
         send(`🔁 Already synced: ${alreadySynced}`);
