@@ -285,10 +285,18 @@ export default function PlayerPage({ onTogglePlaylist }) {
     setVolume(vol);
   }; */
 
-  const formatTime = (t) =>
+  /* const formatTime = (t) =>
     isNaN(t)
       ? "0:00"
-      : `${Math.floor(t / 60)}:${("0" + Math.floor(t % 60)).slice(-2)}`;
+      : `${Math.floor(t / 60)}:${("0" + Math.floor(t % 60)).slice(-2)}`; */
+
+      const formatTime = (t) =>
+  isNaN(t) || t < 0
+    ? "0:00"
+    : t >= 3600
+    ? `${Math.floor(t / 3600)}:${("0" + Math.floor((t % 3600) / 60)).slice(-2)}:${("0" + Math.floor(t % 60)).slice(-2)}`
+    : `${Math.floor(t / 60)}:${("0" + Math.floor(t % 60)).slice(-2)}`;
+
 
   const backgroundGradient = `linear-gradient(to bottom, ${theme.darkMuted} 0%, ${theme.muted} 100%)`;
 
@@ -556,6 +564,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
 
                 {/* Seek input */}
                 <input
+                key={meta.id+duration}
                   disabled={loading}
                   type="range"
                   min="0"
@@ -570,6 +579,7 @@ export default function PlayerPage({ onTogglePlaylist }) {
               <div
                 className="flex justify-between text-xs mt-1"
                 style={{ color: theme.lightMuted }}
+                 key={meta.id}
               >
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>

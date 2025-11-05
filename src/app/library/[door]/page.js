@@ -1,45 +1,47 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { BookText, Music, Radio, User } from "lucide-react";
+import { BookText, Music, Radio } from "lucide-react";
 import usePersistentState from "@/lib/usePersistentState";
+import useSongStore from "@/lib/songStore";
 
 export default function LibraryDoorPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const door = pathname?.split("/").pop();
 
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [playlists] = usePersistentState("userPlaylists", []);
+  const [playlists] = usePersistentState("userPlaylists", [] || []);
 
   useEffect(() => {
     async function fetchSongs() {
-      let userSongs = [];
-      if (playlists.length > 0) {
-        userSongs = playlists.flatMap((pl) => pl.songs || []);
-      }
+      try {
+        let userSongs = [];
 
-      if (userSongs.length > 0) {
-        setSongs(userSongs);
-        setLoading(false);
-      } else {
-        try {
-          const res = await fetch("/api/songs");
+        if (playlists.length > 0) {
+          userSongs = playlists.flatMap((pl) => pl.songs || []);
+        }
+
+        if (userSongs.length > 0) {
+          setSongs(userSongs);
+        } else {
+          const query = door === "audiobooks" ? "?type=audiobook" : "";
+          const res = await fetch(`/api/songs${query}`);
           const data = await res.json();
           setSongs(data);
-          setLoading(false);
-        } catch (error) {
-          console.error("Failed to load songs:", error);
-          setSongs([]);
-          setLoading(false);
         }
+      } catch (error) {
+        console.error("Failed to load songs:", error);
+        setSongs([]);
+      } finally {
+        setLoading(false);
       }
     }
 
-    if (door === "artists" || door === "albums") {
+    if (["artists", "albums", "audiobooks"].includes(door)) {
       fetchSongs();
     } else {
       setLoading(false);
@@ -58,7 +60,9 @@ export default function LibraryDoorPage() {
 
   if (loading) {
     return (
-      <div className="p-6 text-white text-center flex items-center justify-center min-h-[93dvh]">Loading {door}...</div>
+      <div className="p-6 text-white text-center flex items-center justify-center min-h-[93dvh]">
+        Loading {door}...
+      </div>
     );
   }
 
@@ -104,21 +108,72 @@ export default function LibraryDoorPage() {
     );
   }
 
+  // 💥 Fixed Audiobook section
+  if (door === "audiobooks") {
+    const handlePlayBook = (book) => {
+      const { setPlaylist, setCurrentPlaylistId, setCurrentSong } =
+        useSongStore.getState();
+
+      const tempPlaylistId = "audiobooks";
+      const playlistSongs = songs.filter((s) => s.type === "audiobook");
+
+      setPlaylist(tempPlaylistId, playlistSongs);
+      setCurrentPlaylistId(tempPlaylistId);
+      setCurrentSong(book);
+
+      router.push(`/player/${book.id}`);
+    };
+
+    return (
+      <div className="p-6 max-w-screen-xl mx-auto h-[93dvh] overflow-auto">
+        <h1 className="text-2xl font-bold text-white mb-10 tracking-tight flex gap-2 items-center">
+          <BookText size={28} /> Audiobooks
+        </h1>
+
+        {songs.length === 0 ? (
+          <div className="text-center text-neutral-400 mt-20">
+            No audiobooks found. Add some to your Drive 📚✨
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {songs.map((book) => (
+              <div
+                key={book.id}
+                onClick={() => handlePlayBook(book)}
+                className="cursor-pointer rounded-sm overflow-hidden bg-white/5 hover:scale-[1.02] transition"
+              >
+                <div className="relative w-full aspect-square">
+                  <Image
+                    src={book.cover || "/default.png"}
+                    alt={book.title}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                </div>
+                <div className="p-3">
+                  <p className="text-white font-medium truncate">{book.title}</p>
+                  <p className="text-sm text-neutral-400 truncate">
+                    {book.artist || "Unknown Author"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const pages = {
     radio: {
       title: "Live Radio",
       icon: <Radio size={32} />,
       placeholder: "Coming soon: curated radio stations for every mood!",
     },
-    audiobooks: {
-      title: "Audiobooks",
-      icon: <BookText size={32} />,
-      placeholder: "Relax with short and sweet audiobooks. Coming soon!",
-    },
   };
 
   const data = pages[door];
-
   if (!data) return null;
 
   return (

@@ -58,7 +58,7 @@ export default function Library() {
     },
     {
       icon: <BookText size={24} />,
-      label: "Mini Audiobooks",
+      label: "Audiobooks",
       href: "/library/audiobooks",
     },
   ];

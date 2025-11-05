@@ -71,9 +71,11 @@ export async function GET(req) {
 
         const drive = google.drive({ version: "v3", auth: oauth2Client });
 
+        const AUDIOBOOK_FOLDER_ID = process.env.GOOGLE_AUDIOBOOK_FOLDER_ID;
+
         const list = await drive.files.list({
           q: "mimeType contains 'audio/' and trashed = false",
-          fields: "files(id, name, mimeType)",
+          fields: "files(id, name, mimeType, parents)",
         });
 
         const files = list.data.files;
@@ -88,7 +90,7 @@ export async function GET(req) {
         for (let index = 0; index < files.length; index++) {
           const file = files[index];
           const { id: fileId, name: fileName, mimeType } = file;
-
+          const isAudiobook = file.parents?.includes(AUDIOBOOK_FOLDER_ID);
           try {
             await drive.files.get({ fileId });
           } catch (err) {
@@ -195,8 +197,6 @@ export async function GET(req) {
 
               cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;*/
 
-
-
               function sanitizeFilename(filename) {
                 // Remove special characters that are not allowed in file names
                 return filename.replace(/[^a-zA-Z0-9-_ ]/g, "_"); // Keep spaces and letters/numbers
@@ -224,7 +224,7 @@ export async function GET(req) {
                 },
               });
 
-              cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`
+              cover = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;
               send(`✅ Cover uploaded: ${uploaded.id}`);
 
               send(`🎨 Extracting color palette...`);
@@ -283,29 +283,31 @@ export async function GET(req) {
             send(`💾 Saving to database...`);
 
             await songsCollection.updateOne(
-              { id: fileId },
-              {
-                $set: {
-                  id: fileId,
-                  title,
-                  artist,
-                  album,
-                  cover,
-                  duration,
-                  theme,
-                  format,
-                  year,
-                  key,
-                  bpm,
-                  bitrate,
-                  sampleRate,
-                  bitDepth,
-                  qualityText,
-                  tags,
-                },
-              },
-              { upsert: true }
-            );
+  { id: fileId },
+  {
+    $set: {
+      id: fileId,
+      title,
+      artist,
+      album,
+      cover,
+      duration,
+      theme,
+      format,
+      year,
+      key,
+      bpm,
+      bitrate,
+      sampleRate,
+      bitDepth,
+      qualityText,
+      tags,
+      ...(isAudiobook ? { type: "audiobook" } : {}), // 💥 only tag audiobooks
+    },
+  },
+  { upsert: true }
+);
+
 
             synced++;
             send(`✅ Synced: ${title}`);
